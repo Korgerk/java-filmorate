@@ -61,9 +61,9 @@ public class FilmValidationTest {
     @Test
     public void shouldValidateCorrectFilm() {
         Film film = new Film();
-        film.setName("Интерстеллар");
-        film.setDescription("Фильм о космосе");
-        film.setReleaseDate(LocalDate.of(2014, 11, 7));
+        film.setName("Поговорим с дотерами #1 [Феникс]");
+        film.setDescription("Легенда детства");
+        film.setReleaseDate(LocalDate.of(2015, 4, 2));
         film.setDuration(169);
 
         Set<ConstraintViolation<Film>> violations = validator.validate(film);
