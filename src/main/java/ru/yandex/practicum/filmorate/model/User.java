@@ -22,6 +22,4 @@ public class User {
     @PastOrPresent(message = "Дата рождения не может быть в будущем.")
     @NotNull(message = "Дата рождения обязательна.")
     private LocalDate birthday;
-
-    // Если имя пустое — используем логин (обработка в сервисе)
 }
