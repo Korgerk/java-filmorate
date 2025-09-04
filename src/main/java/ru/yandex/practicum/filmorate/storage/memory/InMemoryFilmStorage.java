@@ -5,8 +5,10 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
+import java.awt.*;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
@@ -49,20 +51,25 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
-    public void addLike(int filmId, int userId) {
+    public void addLike(int filmId, int userId, RenderingHints users) {
         if (!films.containsKey(filmId)) {
             throw new ValidationException("Фильм с id=" + filmId + " не найден.");
+        }
+        if (!users.containsKey(userId)) {
+            throw new ValidationException("Пользователь с id=" + userId + " не найден.");
         }
         filmLikes.computeIfAbsent(filmId, k -> new HashSet<>()).add(userId);
     }
 
     @Override
-    public void removeLike(int filmId, int userId) {
+    public void removeLike(int filmId, int userId, RenderingHints user) {
         if (!films.containsKey(filmId)) {
             throw new ValidationException("Фильм с id=" + filmId + " не найден.");
         }
-        Set<Integer> likes = filmLikes.get(filmId);
-        likes.remove(userId);
+        if (!user.containsKey(userId)) {
+            throw new ValidationException("Пользователь с id=" + userId + " не найден.");
+        }
+        filmLikes.get(filmId).remove(userId);
     }
 
     @Override

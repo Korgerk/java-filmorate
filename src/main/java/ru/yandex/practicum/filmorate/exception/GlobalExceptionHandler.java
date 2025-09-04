@@ -1,5 +1,3 @@
-// src/main/java/ru/yandex/practicum/filmorate/exception/ValidationExceptionHandler.java
-
 package ru.yandex.practicum.filmorate.exception;
 
 import org.springframework.http.HttpStatus;
@@ -20,5 +18,13 @@ public class GlobalExceptionHandler {
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getFieldErrors().forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
         return errors;
+    }
+
+    @ExceptionHandler(ValidationException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public Map<String, String> handleNotFoundException(ValidationException e) {
+        Map<String, String> error = new HashMap<>();
+        error.put("error", e.getMessage());
+        return error;
     }
 }

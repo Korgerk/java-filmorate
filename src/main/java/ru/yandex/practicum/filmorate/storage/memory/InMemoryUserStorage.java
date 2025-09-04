@@ -60,17 +60,23 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public void addFriend(int userId, int friendId) {
-        if (!users.containsKey(userId) || !users.containsKey(friendId)) {
-            throw new ValidationException("Пользователь не найден.");
+        if (!users.containsKey(userId)) {
+            throw new ValidationException("Пользователь с id=" + userId + " не найден.");
+        }
+        if (!users.containsKey(friendId)) {
+            throw new ValidationException("Пользователь с id=" + friendId + " не найден.");
         }
         userFriends.get(userId).add(friendId);
-        userFriends.get(friendId).add(userId); // двусторонняя дружба
+        userFriends.get(friendId).add(userId);
     }
 
     @Override
     public void removeFriend(int userId, int friendId) {
-        if (!users.containsKey(userId) || !users.containsKey(friendId)) {
-            throw new ValidationException("Пользователь не найден.");
+        if (!users.containsKey(userId)) {
+            throw new ValidationException("Пользователь с id=" + userId + " не найден.");
+        }
+        if (!users.containsKey(friendId)) {
+            throw new ValidationException("Пользователь с id=" + friendId + " не найден.");
         }
         userFriends.get(userId).remove(friendId);
         userFriends.get(friendId).remove(userId);
