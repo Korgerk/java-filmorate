@@ -27,8 +27,5 @@ logs/
 # Локальные настройки
 local.properties
 
-# Checkstyle
-checkstyle.xml
-
 # Workflows
 .github/workflows/api-tests.yml
