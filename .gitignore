@@ -1,31 +1,13 @@
 # Maven
 target/
-!.mvn/wrapper/maven-wrapper.jar
 
 # IDE
 .idea/
 *.iml
-*.ipr
-*.iws
-out/
-build/
 
-# Компиляция Java
-**/*.class
-
-# JAR файлы
-**/*.jar
-
-# ОС
+# Mac
 .DS_Store
-Thumbs.db
 
-# Логи
-*.log
-logs/
-
-# Локальные настройки
-local.properties
-
-# Workflows
-.github/workflows/api-tests.yml
+# Java / Spring
+*.class
+*.jar
