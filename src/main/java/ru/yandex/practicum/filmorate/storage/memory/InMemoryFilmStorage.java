@@ -1,22 +1,26 @@
-package ru.yandex.practicum.filmorate.storage.film.memory;
+package ru.yandex.practicum.filmorate.storage.film.impl;
 
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
-import java.awt.*;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
 public class InMemoryFilmStorage implements FilmStorage {
 
     private final Map<Integer, Film> films = new HashMap<>();
-    private final Map<Integer, Set<Integer>> filmLikes = new HashMap<>(); // filmId -> set of userIds
+    private final Map<Integer, Set<Integer>> filmLikes = new HashMap<>();
+    private final UserStorage userStorage;
     private int generatedId = 1;
+
+    public InMemoryFilmStorage(UserStorage userStorage) {
+        this.userStorage = userStorage;
+    }
 
     @Override
     public Film create(Film film) {
@@ -29,7 +33,7 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @Override
     public Film update(Film film) {
-        if (!films.containsKey(film.getId())) {
+        if (!exists(film.getId())) {
             throw new ValidationException("Фильм с id=" + film.getId() + " не найден.");
         }
         validateReleaseDate(film);
@@ -44,29 +48,34 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @Override
     public Film getById(int id) {
-        if (!films.containsKey(id)) {
+        if (!exists(id)) {
             throw new ValidationException("Фильм с id=" + id + " не найден.");
         }
         return films.get(id);
     }
 
     @Override
-    public void addLike(int filmId, int userId, RenderingHints users) {
-        if (!films.containsKey(filmId)) {
+    public boolean exists(int id) {
+        return films.containsKey(id);
+    }
+
+    @Override
+    public void addLike(int filmId, int userId) {
+        if (!exists(filmId)) {
             throw new ValidationException("Фильм с id=" + filmId + " не найден.");
         }
-        if (!users.containsKey(userId)) {
+        if (!userStorage.exists(userId)) {
             throw new ValidationException("Пользователь с id=" + userId + " не найден.");
         }
         filmLikes.computeIfAbsent(filmId, k -> new HashSet<>()).add(userId);
     }
 
     @Override
-    public void removeLike(int filmId, int userId, RenderingHints user) {
-        if (!films.containsKey(filmId)) {
+    public void removeLike(int filmId, int userId) {
+        if (!exists(filmId)) {
             throw new ValidationException("Фильм с id=" + filmId + " не найден.");
         }
-        if (!user.containsKey(userId)) {
+        if (!userStorage.exists(userId)) {
             throw new ValidationException("Пользователь с id=" + userId + " не найден.");
         }
         filmLikes.get(filmId).remove(userId);

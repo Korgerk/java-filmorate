@@ -2,10 +2,10 @@ package ru.yandex.practicum.filmorate.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
-import java.util.HashSet;
 import java.util.Set;
 
 @Service
@@ -31,14 +31,26 @@ public class UserService {
     }
 
     public Set<User> getAll() {
-        return new HashSet<>(userStorage.getAll());
+        return userStorage.getAll();
     }
 
     public void addFriend(int userId, int friendId) {
+        if (!userStorage.exists(userId)) {
+            throw new ValidationException("Пользователь с id=" + userId + " не найден.");
+        }
+        if (!userStorage.exists(friendId)) {
+            throw new ValidationException("Пользователь с id=" + friendId + " не найден.");
+        }
         userStorage.addFriend(userId, friendId);
     }
 
     public void removeFriend(int userId, int friendId) {
+        if (!userStorage.exists(userId)) {
+            throw new ValidationException("Пользователь с id=" + userId + " не найден.");
+        }
+        if (!userStorage.exists(friendId)) {
+            throw new ValidationException("Пользователь с id=" + friendId + " не найден.");
+        }
         userStorage.removeFriend(userId, friendId);
     }
 
