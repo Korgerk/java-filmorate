@@ -12,6 +12,7 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Map<String, String> handleValidationExceptions(MethodArgumentNotValidException ex) {
@@ -20,11 +21,17 @@ public class GlobalExceptionHandler {
         return errors;
     }
 
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, String> handleValidationErrors(IllegalArgumentException e) {
+        return Map.of("error", e.getMessage());
+    }
+
+
     @ExceptionHandler(ValidationException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public Map<String, String> handleNotFoundException(ValidationException e) {
-        Map<String, String> error = new HashMap<>();
-        error.put("error", e.getMessage());
-        return error;
+        return Map.of("error", e.getMessage());
     }
 }

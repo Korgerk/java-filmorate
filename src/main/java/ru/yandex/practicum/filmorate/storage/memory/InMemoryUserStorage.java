@@ -55,7 +55,7 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public Set<User> getAll() {
-        return new HashSet<>(users.values());
+        return users.values().stream().sorted(Comparator.comparing(User::getId)).collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     @Override

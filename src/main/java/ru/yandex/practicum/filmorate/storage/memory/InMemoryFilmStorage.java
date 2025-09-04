@@ -43,7 +43,7 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @Override
     public List<Film> getAll() {
-        return new ArrayList<>(films.values());
+        return films.values().stream().sorted(Comparator.comparing(Film::getId)).collect(Collectors.toList());
     }
 
     @Override
@@ -87,8 +87,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     private void validateReleaseDate(Film film) {
-        if (film.getReleaseDate() != null && film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
-            throw new ValidationException("Дата релиза не может быть раньше 28 декабря 1895 года.");
-        }
+        if (film.getReleaseDate() != null && film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28)))
+            throw new IllegalArgumentException("Дата релиза не может быть раньше 28 декабря 1895 года.");
     }
 }
