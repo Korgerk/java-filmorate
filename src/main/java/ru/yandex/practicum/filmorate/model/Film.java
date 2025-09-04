@@ -5,23 +5,26 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
 
+import static lombok.AccessLevel.PRIVATE;
+
 @Data
+@FieldDefaults(level = PRIVATE)
 public class Film {
-    private Integer id;
+    Integer id;
 
     @NotBlank(message = "Название фильма не может быть пустым.")
-    private String name;
+    String name;
 
     @Size(max = 200, message = "Описание не может быть длиннее 200 символов.")
-    private String description;
+    String description;
 
     @NotNull(message = "Дата релиза обязательна.")
-    private LocalDate releaseDate;
+    LocalDate releaseDate;
 
     @Positive(message = "Продолжительность фильма должна быть положительной.")
-    private Integer duration;
-
+    Integer duration;
 }
