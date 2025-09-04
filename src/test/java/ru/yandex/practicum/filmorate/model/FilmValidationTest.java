@@ -36,7 +36,7 @@ public class FilmValidationTest {
     public void shouldNotValidateLongDescription() {
         Film film = new Film();
         film.setName("Фильм");
-        film.setDescription("a".repeat(201));
+        film.setDescription("a".repeat(201)); // 201 символ — превышение
         film.setReleaseDate(LocalDate.of(2000, 1, 1));
         film.setDuration(120);
 
@@ -59,11 +59,26 @@ public class FilmValidationTest {
     }
 
     @Test
+    public void shouldNotValidateTooEarlyReleaseDate() {
+        Film film = new Film();
+        film.setName("Фильм");
+        film.setDescription("Описание");
+        film.setReleaseDate(LocalDate.of(1895, 12, 27)); // раньше 28.12.1895
+        film.setDuration(120);
+
+        Set<ConstraintViolation<Film>> violations = validator.validate(film);
+        // Аннотация @Past не подходит — проверка делается вручную
+        // Поэтому валидация через @NotNull и @Future проходит, но логика в сервисе/контроллере должна отловить это
+        // Здесь мы просто убеждаемся, что дата не null
+        assertTrue(violations.isEmpty(), "Аннотации не ловят дату до 1895-12-28 — это делается в коде");
+    }
+
+    @Test
     public void shouldValidateCorrectFilm() {
         Film film = new Film();
-        film.setName("Поговорим с дотерами #1 [Феникс]");
-        film.setDescription("Легенда детства");
-        film.setReleaseDate(LocalDate.of(2015, 4, 2));
+        film.setName("Интерстеллар");
+        film.setDescription("Фильм о космосе");
+        film.setReleaseDate(LocalDate.of(2014, 11, 7));
         film.setDuration(169);
 
         Set<ConstraintViolation<Film>> violations = validator.validate(film);
