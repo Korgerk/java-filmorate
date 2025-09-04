@@ -11,3 +11,7 @@ target/
 # Java / Spring
 *.class
 *.jar
+
+# Запрет на изменение системных файлов
+checkstyle.xml
+.github/workflows/api-tests.yml
