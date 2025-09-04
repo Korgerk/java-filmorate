@@ -63,11 +63,13 @@ public class FilmValidationTest {
         Film film = new Film();
         film.setName("Фильм");
         film.setDescription("Описание");
-        film.setReleaseDate(LocalDate.of(1895, 12, 27)); // раньше 28.12.1895
+        film.setReleaseDate(LocalDate.of(1895, 12, 27)); // раньше
         film.setDuration(120);
 
         Set<ConstraintViolation<Film>> violations = validator.validate(film);
-        assertTrue(violations.isEmpty(), "Аннотации не ловят дату до 1895-12-28 — это делается в коде");
+        assertFalse(violations.isEmpty());
+        assertTrue(violations.stream()
+                .anyMatch(v -> v.getMessage().contains("28 декабря")));
     }
 
     @Test
