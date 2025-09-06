@@ -36,7 +36,7 @@ public class FilmValidationTest {
     public void shouldNotValidateLongDescription() {
         Film film = new Film();
         film.setName("Фильм");
-        film.setDescription("a".repeat(201));
+        film.setDescription("a".repeat(201)); // 201 символ — превышение
         film.setReleaseDate(LocalDate.of(2000, 1, 1));
         film.setDuration(120);
 
@@ -59,11 +59,25 @@ public class FilmValidationTest {
     }
 
     @Test
+    public void shouldNotValidateTooEarlyReleaseDate() {
+        Film film = new Film();
+        film.setName("Фильм");
+        film.setDescription("Описание");
+        film.setReleaseDate(LocalDate.of(1895, 12, 27)); // раньше
+        film.setDuration(120);
+
+        Set<ConstraintViolation<Film>> violations = validator.validate(film);
+        assertFalse(violations.isEmpty());
+        assertTrue(violations.stream()
+                .anyMatch(v -> v.getMessage().contains("28 декабря")));
+    }
+
+    @Test
     public void shouldValidateCorrectFilm() {
         Film film = new Film();
-        film.setName("Поговорим с дотерами #1 [Феникс]");
-        film.setDescription("Легенда детства");
-        film.setReleaseDate(LocalDate.of(2015, 4, 2));
+        film.setName("Интерстеллар");
+        film.setDescription("Фильм о космосе");
+        film.setReleaseDate(LocalDate.of(2014, 11, 7));
         film.setDuration(169);
 
         Set<ConstraintViolation<Film>> violations = validator.validate(film);
