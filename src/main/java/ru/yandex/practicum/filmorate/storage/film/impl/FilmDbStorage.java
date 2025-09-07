@@ -121,7 +121,7 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public boolean exists(int id) {
-        String sql = "SELECT COUNT(*) FROM films WHERE id = ?";
+        String sql = "SELECT COUNT(*) FROM users WHERE id = ?";
         Integer count = jdbcTemplate.queryForObject(sql, Integer.class, id);
         return count != null && count > 0;
     }
