@@ -11,7 +11,6 @@ import static lombok.AccessLevel.PRIVATE;
 
 @Data
 @FieldDefaults(level = PRIVATE)
-@Setter
 public class User {
     Integer id;
 

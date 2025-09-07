@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.model;
 
+import jakarta.validation.Valid;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -12,6 +13,8 @@ public class FilmCreateRequest {
     private String description;
     private LocalDate releaseDate;
     private Integer duration;
+    @Valid
     private MpaDto mpa;
+    @Valid
     private List<GenreDto> genres;
 }

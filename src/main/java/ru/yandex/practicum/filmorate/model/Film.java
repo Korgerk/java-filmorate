@@ -15,7 +15,6 @@ import static lombok.AccessLevel.PRIVATE;
 
 @Data
 @FieldDefaults(level = PRIVATE)
-@ValidReleaseDate
 public class Film {
     Integer id;
 
