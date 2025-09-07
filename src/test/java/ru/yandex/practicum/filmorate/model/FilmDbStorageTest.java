@@ -94,10 +94,12 @@ class FilmDbStorageTest {
         film2.setName("Popular Film");
         film2.setReleaseDate(LocalDate.of(2020, 1, 1));
         film2.setDuration(120);
-        film2.setMpa(new MpaRating() {{
-            setId(1);
-            setName("G");
-        }});
+        film2.setMpa(new MpaRating() {
+            {
+                setId(1);
+                setName("G");
+            }
+        });
         filmStorage.create(film2);
 
         // Добавляем больше лайков первому фильму
