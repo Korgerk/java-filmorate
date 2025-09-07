@@ -5,12 +5,14 @@ import jakarta.validation.Payload;
 
 import java.lang.annotation.*;
 
-@Target({ElementType.TYPE})
-@Retention(RetentionPolicy.RUNTIME)
-@Constraint(validatedBy = ReleaseDateValidator.class)
 @Documented
+@Constraint(validatedBy = ReleaseDateValidator.class)
+@Target({ElementType.FIELD})
+@Retention(RetentionPolicy.RUNTIME)
 public @interface ValidReleaseDate {
-    String message() default "Дата релиза не может быть раньше 28 декабря 1895 года.";
+    String message() default "Дата релиза фильма не может быть раньше 28 декабря 1895 года.";
+
     Class<?>[] groups() default {};
+
     Class<? extends Payload>[] payload() default {};
 }
