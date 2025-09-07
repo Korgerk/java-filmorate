@@ -48,7 +48,6 @@ class UserDbStorageTest {
     @Test
     void testCreateAndFindUserById() {
         User createdUser = userStorage.create(user1);
-
         assertThat(createdUser.getId()).isNotNull();
         assertThat(createdUser.getEmail()).isEqualTo("user1@example.com");
 
@@ -74,7 +73,6 @@ class UserDbStorageTest {
         userStorage.create(user2);
 
         Set<User> allUsers = userStorage.getAll();
-
         assertThat(allUsers).hasSize(2);
         assertThat(allUsers).extracting(User::getEmail).contains("user1@example.com", "user2@example.com");
     }
@@ -113,9 +111,6 @@ class UserDbStorageTest {
     @Test
     void testUserNotFound() {
         int nonExistentId = 999;
-
-        assertThrows(ValidationException.class, () -> {
-            userStorage.getById(nonExistentId);
-        });
+        assertThrows(ValidationException.class, () -> userStorage.getById(nonExistentId));
     }
 }

@@ -12,7 +12,10 @@ import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 @RequiredArgsConstructor
 @Component
@@ -39,9 +42,7 @@ public class UserDbStorage implements UserStorage {
         }
 
         String sql = "INSERT INTO users (email, login, name, birthday) VALUES (?, ?, ?, ?)";
-        jdbcTemplate.update(sql, user.getEmail(), user.getLogin(),
-                user.getName() != null ? user.getName() : user.getLogin(),
-                user.getBirthday());
+        jdbcTemplate.update(sql, user.getEmail(), user.getLogin(), user.getName() != null ? user.getName() : user.getLogin(), user.getBirthday());
 
         Integer id = jdbcTemplate.queryForObject("SELECT MAX(id) FROM users", Integer.class);
         user.setId(id);
@@ -59,9 +60,7 @@ public class UserDbStorage implements UserStorage {
         }
 
         String sql = "UPDATE users SET email = ?, login = ?, name = ?, birthday = ? WHERE id = ?";
-        jdbcTemplate.update(sql, user.getEmail(), user.getLogin(),
-                user.getName() != null ? user.getName() : user.getLogin(),
-                user.getBirthday(), user.getId());
+        jdbcTemplate.update(sql, user.getEmail(), user.getLogin(), user.getName() != null ? user.getName() : user.getLogin(), user.getBirthday(), user.getId());
         return user;
     }
 
@@ -109,19 +108,14 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public Set<User> getFriends(int userId) {
-        String sql = "SELECT u.* FROM users u " +
-                     "INNER JOIN user_friends uf ON u.id = uf.friend_id " +
-                     "WHERE uf.user_id = ?";
+        String sql = "SELECT u.* FROM users u " + "INNER JOIN user_friends uf ON u.id = uf.friend_id " + "WHERE uf.user_id = ?";
         List<User> friends = jdbcTemplate.query(sql, userRowMapper, userId);
         return new HashSet<>(friends);
     }
 
     @Override
     public Set<User> getCommonFriends(int userId, int otherId) {
-        String sql = "SELECT u.* FROM users u " +
-                     "INNER JOIN user_friends uf1 ON u.id = uf1.friend_id " +
-                     "INNER JOIN user_friends uf2 ON u.id = uf2.friend_id " +
-                     "WHERE uf1.user_id = ? AND uf2.user_id = ?";
+        String sql = "SELECT u.* FROM users u " + "INNER JOIN user_friends uf1 ON u.id = uf1.friend_id " + "INNER JOIN user_friends uf2 ON u.id = uf2.friend_id " + "WHERE uf1.user_id = ? AND uf2.user_id = ?";
         List<User> commonFriends = jdbcTemplate.query(sql, userRowMapper, userId, otherId);
         return new HashSet<>(commonFriends);
     }
