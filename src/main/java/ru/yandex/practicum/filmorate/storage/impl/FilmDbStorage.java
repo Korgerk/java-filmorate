@@ -1,11 +1,11 @@
 package ru.yandex.practicum.filmorate.storage.impl;
 
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MpaRating;
@@ -33,7 +33,6 @@ public class FilmDbStorage implements FilmStorage {
             film.setReleaseDate(rs.getDate("release_date").toLocalDate());
             film.setDuration(rs.getInt("duration"));
 
-            // Устанавливаем MPA рейтинг
             MpaRating mpa = new MpaRating();
             mpa.setId(rs.getInt("mpa_rating_id"));
             mpa.setName(rs.getString("mpa_name"));
@@ -60,11 +59,9 @@ public class FilmDbStorage implements FilmStorage {
         String sql = "INSERT INTO films (name, description, release_date, duration, mpa_rating_id) VALUES (?, ?, ?, ?, ?)";
         jdbcTemplate.update(sql, film.getName(), film.getDescription(), film.getReleaseDate(), film.getDuration(), film.getMpa() != null ? film.getMpa().getId() : null);
 
-        // Получаем сгенерированный ID
         Integer id = jdbcTemplate.queryForObject("SELECT MAX(id) FROM films", Integer.class);
         film.setId(id);
 
-        // Сохраняем жанры, если они указаны
         if (film.getGenres() != null && !film.getGenres().isEmpty()) {
             saveGenresForFilm(id, film.getGenres());
         }
@@ -83,11 +80,8 @@ public class FilmDbStorage implements FilmStorage {
         String sql = "UPDATE films SET name = ?, description = ?, release_date = ?, duration = ?, mpa_rating_id = ? WHERE id = ?";
         jdbcTemplate.update(sql, film.getName(), film.getDescription(), film.getReleaseDate(), film.getDuration(), film.getMpa() != null ? film.getMpa().getId() : null, film.getId());
 
-        // Обновляем жанры
         if (film.getGenres() != null) {
-            // Удаляем старые жанры
             jdbcTemplate.update("DELETE FROM film_genres WHERE film_id = ?", film.getId());
-            // Добавляем новые жанры
             saveGenresForFilm(film.getId(), film.getGenres());
         }
 
@@ -100,7 +94,6 @@ public class FilmDbStorage implements FilmStorage {
 
         List<Film> films = jdbcTemplate.query(sql, filmRowMapper);
 
-        // Загружаем жанры для каждого фильма
         for (Film film : films) {
             film.setGenres(getGenresForFilm(film.getId()));
         }
@@ -110,14 +103,17 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Film getById(int id) {
+        if (!exists(id)) {
+            throw new ValidationException("Фильм с id=" + id + " не найден.");
+        }
+
         String sql = "SELECT f.*, mr.id as mpa_rating_id, mr.name as mpa_name " + "FROM films f " + "LEFT JOIN mpa_ratings mr ON f.mpa_rating_id = mr.id " + "WHERE f.id = ?";
 
         try {
             Film film = jdbcTemplate.queryForObject(sql, filmRowMapper, id);
-            if (film == null) {
-                throw new ValidationException("Фильм с id=" + id + " не найден.");
+            if (film != null) {
+                film.setGenres(getGenresForFilm(id));
             }
-            film.setGenres(getGenresForFilm(id));
             return film;
         } catch (EmptyResultDataAccessException e) {
             throw new ValidationException("Фильм с id=" + id + " не найден.");
@@ -140,7 +136,6 @@ public class FilmDbStorage implements FilmStorage {
             throw new ValidationException("Пользователь с id=" + userId + " не найден.");
         }
 
-        // Проверяем, не поставил ли уже пользователь лайк этому фильму
         String checkSql = "SELECT COUNT(*) FROM film_likes WHERE film_id = ? AND user_id = ?";
         Integer count = jdbcTemplate.queryForObject(checkSql, Integer.class, filmId, userId);
 
@@ -175,7 +170,6 @@ public class FilmDbStorage implements FilmStorage {
             film.setReleaseDate(rs.getDate("release_date").toLocalDate());
             film.setDuration(rs.getInt("duration"));
 
-            // Устанавливаем MPA рейтинг
             MpaRating mpa = new MpaRating();
             mpa.setId(rs.getInt("mpa_rating_id"));
             mpa.setName(rs.getString("mpa_name"));
@@ -184,7 +178,6 @@ public class FilmDbStorage implements FilmStorage {
             return film;
         }, count);
 
-        // Загружаем жанры для каждого фильма
         for (Film film : films) {
             film.setGenres(getGenresForFilm(film.getId()));
         }

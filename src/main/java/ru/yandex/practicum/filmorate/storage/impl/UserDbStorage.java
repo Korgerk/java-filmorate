@@ -1,6 +1,5 @@
 package ru.yandex.practicum.filmorate.storage.impl;
 
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -45,13 +44,8 @@ public class UserDbStorage implements UserStorage {
         String sql = "INSERT INTO users (email, login, name, birthday) VALUES (?, ?, ?, ?)";
         jdbcTemplate.update(sql, user.getEmail(), user.getLogin(), user.getName() != null ? user.getName() : user.getLogin(), user.getBirthday());
 
-        // Получаем сгенерированный ID
         Integer id = jdbcTemplate.queryForObject("SELECT MAX(id) FROM users", Integer.class);
         user.setId(id);
-
-        // Создаем пустые списки друзей
-        jdbcTemplate.update("INSERT INTO user_friends (user_id, friend_id, confirmed) VALUES (?, ?, ?)", id, id, true);
-
         return user;
     }
 
@@ -67,16 +61,11 @@ public class UserDbStorage implements UserStorage {
 
         String sql = "UPDATE users SET email = ?, login = ?, name = ?, birthday = ? WHERE id = ?";
         jdbcTemplate.update(sql, user.getEmail(), user.getLogin(), user.getName() != null ? user.getName() : user.getLogin(), user.getBirthday(), user.getId());
-
         return user;
     }
 
     @Override
     public User getById(int id) {
-        if (!exists(id)) {
-            throw new ValidationException("Пользователь с id=" + id + " не найден.");
-        }
-
         String sql = "SELECT * FROM users WHERE id = ?";
         try {
             return jdbcTemplate.queryForObject(sql, userRowMapper, id);
@@ -101,32 +90,17 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public void addFriend(int userId, int friendId) {
-        if (!exists(userId)) {
-            throw new ValidationException("Пользователь с id=" + userId + " не найден.");
-        }
-        if (!exists(friendId)) {
-            throw new ValidationException("Пользователь с id=" + friendId + " не найден.");
-        }
+        if (!exists(userId)) throw new ValidationException("Пользователь с id=" + userId + " не найден.");
+        if (!exists(friendId)) throw new ValidationException("Пользователь с id=" + friendId + " не найден.");
 
-        // Проверяем, не является ли пользователь уже другом
-        String checkSql = "SELECT COUNT(*) FROM user_friends WHERE user_id = ? AND friend_id = ?";
-        Integer count = jdbcTemplate.queryForObject(checkSql, Integer.class, userId, friendId);
-
-        if (count != null && count == 0) {
-            // Добавляем друга (односторонняя дружба)
-            String sql = "INSERT INTO user_friends (user_id, friend_id, confirmed) VALUES (?, ?, ?)";
-            jdbcTemplate.update(sql, userId, friendId, false);
-        }
+        String sql = "INSERT INTO user_friends (user_id, friend_id, confirmed) VALUES (?, ?, ?)";
+        jdbcTemplate.update(sql, userId, friendId, false);
     }
 
     @Override
     public void removeFriend(int userId, int friendId) {
-        if (!exists(userId)) {
-            throw new ValidationException("Пользователь с id=" + userId + " не найден.");
-        }
-        if (!exists(friendId)) {
-            throw new ValidationException("Пользователь с id=" + friendId + " не найден.");
-        }
+        if (!exists(userId)) throw new ValidationException("Пользователь с id=" + userId + " не найден.");
+        if (!exists(friendId)) throw new ValidationException("Пользователь с id=" + friendId + " не найден.");
 
         String sql = "DELETE FROM user_friends WHERE user_id = ? AND friend_id = ?";
         jdbcTemplate.update(sql, userId, friendId);
@@ -134,27 +108,14 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public Set<User> getFriends(int userId) {
-        if (!exists(userId)) {
-            throw new ValidationException("Пользователь с id=" + userId + " не найден.");
-        }
-
-        String sql = "SELECT u.* FROM users u " + "INNER JOIN user_friends uf ON u.id = uf.friend_id " + "WHERE uf.user_id = ? AND uf.confirmed = TRUE";
-
+        String sql = "SELECT u.* FROM users u " + "INNER JOIN user_friends uf ON u.id = uf.friend_id " + "WHERE uf.user_id = ?";
         List<User> friends = jdbcTemplate.query(sql, userRowMapper, userId);
         return new HashSet<>(friends);
     }
 
     @Override
     public Set<User> getCommonFriends(int userId, int otherId) {
-        if (!exists(userId)) {
-            throw new ValidationException("Пользователь с id=" + userId + " не найден.");
-        }
-        if (!exists(otherId)) {
-            throw new ValidationException("Пользователь с id=" + otherId + " не найден.");
-        }
-
-        String sql = "SELECT u.* FROM users u " + "INNER JOIN user_friends uf1 ON u.id = uf1.friend_id " + "INNER JOIN user_friends uf2 ON u.id = uf2.friend_id " + "WHERE uf1.user_id = ? AND uf2.user_id = ? " + "AND uf1.confirmed = TRUE AND uf2.confirmed = TRUE";
-
+        String sql = "SELECT u.* FROM users u " + "INNER JOIN user_friends uf1 ON u.id = uf1.friend_id " + "INNER JOIN user_friends uf2 ON u.id = uf2.friend_id " + "WHERE uf1.user_id = ? AND uf2.user_id = ?";
         List<User> commonFriends = jdbcTemplate.query(sql, userRowMapper, userId, otherId);
         return new HashSet<>(commonFriends);
     }
