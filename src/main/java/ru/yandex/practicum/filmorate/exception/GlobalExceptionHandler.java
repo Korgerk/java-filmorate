@@ -12,40 +12,29 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<String> handleValidationException(MethodArgumentNotValidException e) {
-        String errorMessage = e.getBindingResult().getFieldErrors().stream()
-                .map(error -> error.getField() + ": " + error.getDefaultMessage())
-                .collect(Collectors.joining(", "));
-        return ResponseEntity.status(400)
-                .contentType(MediaType.TEXT_PLAIN)
-                .body(errorMessage);
+    public ResponseEntity<String> handleMethodArgumentNotValid(MethodArgumentNotValidException e) {
+        String errorMessage = e.getBindingResult().getFieldErrors().stream().map(error -> error.getField() + ": " + error.getDefaultMessage()).collect(Collectors.joining(", "));
+        return ResponseEntity.status(400).contentType(MediaType.TEXT_PLAIN).body(errorMessage);
     }
 
-    @ExceptionHandler(ValidationException.class)
-    public ResponseEntity<String> handleValidationException(ValidationException e) {
-        return ResponseEntity.status(400)
-                .contentType(MediaType.TEXT_PLAIN)
-                .body(e.getMessage());
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<String> handleValidationException(MethodArgumentNotValidException e) {
+        String errorMessage = e.getBindingResult().getFieldErrors().stream().map(error -> error.getField() + ": " + error.getDefaultMessage()).collect(Collectors.joining(", "));
+        return ResponseEntity.status(400).contentType(MediaType.TEXT_PLAIN).body(errorMessage);
     }
 
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<String> handleUserNotFoundException(UserNotFoundException e) {
-        return ResponseEntity.status(404)
-                .contentType(MediaType.TEXT_PLAIN)
-                .body(e.getMessage());
+        return ResponseEntity.status(404).contentType(MediaType.TEXT_PLAIN).body(e.getMessage());
     }
 
     @ExceptionHandler(FilmNotFoundException.class)
     public ResponseEntity<String> handleFilmNotFoundException(FilmNotFoundException e) {
-        return ResponseEntity.status(404)
-                .contentType(MediaType.TEXT_PLAIN)
-                .body(e.getMessage());
+        return ResponseEntity.status(404).contentType(MediaType.TEXT_PLAIN).body(e.getMessage());
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleUnexpectedException(Exception e) {
-        return ResponseEntity.status(500)
-                .contentType(MediaType.TEXT_PLAIN)
-                .body("Внутренняя ошибка сервера");
+        return ResponseEntity.status(500).contentType(MediaType.TEXT_PLAIN).body("Внутренняя ошибка сервера");
     }
 }
