@@ -28,9 +28,7 @@ public class FilmController {
         film.setReleaseDate(request.getReleaseDate());
         film.setDuration(request.getDuration());
         film.setMpa(request.getMpa().getId());
-        film.setGenres(request.getGenres().stream()
-                .map(g -> g.getId())
-                .toList());
+        film.setGenres(request.getGenres().stream().map(g -> g.getId()).toList());
 
         return filmService.create(film);
     }
@@ -54,9 +52,7 @@ public class FilmController {
         film.setReleaseDate(request.getReleaseDate());
         film.setDuration(request.getDuration());
         film.setMpa(request.getMpa().getId());
-        film.setGenres(request.getGenres().stream()
-                .map(g -> g.getId())
-                .toList());
+        film.setGenres(request.getGenres().stream().map(g -> g.getId()).toList());
 
         return filmService.update(film);
     }
