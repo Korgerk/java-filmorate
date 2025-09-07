@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.model;
 
 import jakarta.validation.constraints.*;
 import lombok.Data;
+import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
@@ -10,6 +11,7 @@ import static lombok.AccessLevel.PRIVATE;
 
 @Data
 @FieldDefaults(level = PRIVATE)
+@Setter
 public class User {
     Integer id;
 
@@ -26,4 +28,8 @@ public class User {
     @PastOrPresent(message = "Дата рождения не может быть в будущем.")
     @NotNull(message = "Дата рождения обязательна.")
     LocalDate birthday;
+
+    public String getName() {
+        return name != null && !name.isBlank() ? name : login;
+    }
 }

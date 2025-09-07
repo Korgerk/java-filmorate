@@ -1,10 +1,9 @@
 package ru.yandex.practicum.filmorate.model;
 
 import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validation;
 import jakarta.validation.Validator;
-import jakarta.validation.ValidatorFactory;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.time.LocalDate;
@@ -16,8 +15,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SpringBootTest
 public class FilmValidationTest {
 
-    private final ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
-    private final Validator validator = factory.getValidator();
+    @Autowired
+    private Validator validator;
 
     @Test
     public void shouldNotValidateEmptyName() {
@@ -36,7 +35,7 @@ public class FilmValidationTest {
     public void shouldNotValidateLongDescription() {
         Film film = new Film();
         film.setName("Фильм");
-        film.setDescription("a".repeat(201)); // 201 символ — превышение
+        film.setDescription("a".repeat(201));
         film.setReleaseDate(LocalDate.of(2000, 1, 1));
         film.setDuration(120);
 
@@ -63,13 +62,12 @@ public class FilmValidationTest {
         Film film = new Film();
         film.setName("Фильм");
         film.setDescription("Описание");
-        film.setReleaseDate(LocalDate.of(1895, 12, 27)); // раньше
+        film.setReleaseDate(LocalDate.of(1895, 12, 27));
         film.setDuration(120);
 
         Set<ConstraintViolation<Film>> violations = validator.validate(film);
         assertFalse(violations.isEmpty());
-        assertTrue(violations.stream()
-                .anyMatch(v -> v.getMessage().contains("28 декабря")));
+        assertTrue(violations.stream().anyMatch(v -> v.getMessage().contains("28 декабря")));
     }
 
     @Test
