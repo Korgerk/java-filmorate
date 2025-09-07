@@ -23,6 +23,7 @@ class MpaDbStorageTest {
         List<MpaRating> mpaList = mpaStorage.getAll();
         assertThat(mpaList).hasSize(5);
         assertThat(mpaList.get(0).getName()).isEqualTo("G");
+        assertThat(mpaList.get(4).getName()).isEqualTo("NC-17");
     }
 
     @Test

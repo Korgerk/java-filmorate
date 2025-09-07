@@ -23,6 +23,7 @@ class GenreDbStorageTest {
         List<Genre> genres = genreStorage.getAll();
         assertThat(genres).hasSize(6);
         assertThat(genres.get(0).getName()).isEqualTo("Комедия");
+        assertThat(genres.get(5).getName()).isEqualTo("Боевик");
     }
 
     @Test

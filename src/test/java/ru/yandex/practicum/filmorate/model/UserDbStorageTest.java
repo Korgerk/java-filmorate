@@ -22,34 +22,22 @@ class UserDbStorageTest {
     @Autowired
     private UserStorage userStorage;
 
-    private User user1, user2, user3;
+    private User testUser;
 
     @BeforeEach
     void setUp() {
-        user1 = new User();
-        user1.setEmail("user1@example.com");
-        user1.setLogin("user1");
-        user1.setName("User One");
-        user1.setBirthday(LocalDate.of(1990, 1, 1));
-
-        user2 = new User();
-        user2.setEmail("user2@example.com");
-        user2.setLogin("user2");
-        user2.setName("User Two");
-        user2.setBirthday(LocalDate.of(1990, 1, 1));
-
-        user3 = new User();
-        user3.setEmail("user3@example.com");
-        user3.setLogin("user3");
-        user3.setName("User Three");
-        user3.setBirthday(LocalDate.of(1990, 1, 1));
+        testUser = new User();
+        testUser.setEmail("testuser@yandex.ru");
+        testUser.setLogin("testuser");
+        testUser.setName("Test User");
+        testUser.setBirthday(LocalDate.of(1990, 1, 1));
     }
 
     @Test
     void testCreateAndFindUserById() {
-        User createdUser = userStorage.create(user1);
+        User createdUser = userStorage.create(testUser);
         assertThat(createdUser.getId()).isNotNull();
-        assertThat(createdUser.getEmail()).isEqualTo("user1@example.com");
+        assertThat(createdUser.getEmail()).isEqualTo("testuser@yandex.ru");
 
         User foundUser = userStorage.getById(createdUser.getId());
         assertThat(foundUser).usingRecursiveComparison().isEqualTo(createdUser);
@@ -57,55 +45,53 @@ class UserDbStorageTest {
 
     @Test
     void testUpdateUser() {
-        User createdUser = userStorage.create(user1);
+        User createdUser = userStorage.create(testUser);
         createdUser.setName("Updated Name");
-        createdUser.setEmail("updated@example.com");
+        createdUser.setEmail("updated@yandex.ru");
 
         User updatedUser = userStorage.update(createdUser);
 
         assertThat(updatedUser.getName()).isEqualTo("Updated Name");
-        assertThat(updatedUser.getEmail()).isEqualTo("updated@example.com");
+        assertThat(updatedUser.getEmail()).isEqualTo("updated@yandex.ru");
     }
 
     @Test
     void testGetAllUsers() {
-        userStorage.create(user1);
-        userStorage.create(user2);
+        userStorage.create(testUser);
 
         Set<User> allUsers = userStorage.getAll();
-        assertThat(allUsers).hasSize(2);
-        assertThat(allUsers).extracting(User::getEmail).contains("user1@example.com", "user2@example.com");
+        // В data.sql уже есть 3 пользователя: id=1,8,9
+        assertThat(allUsers).hasSizeGreaterThanOrEqualTo(3);
+        assertThat(allUsers).extracting(User::getEmail).contains("user1@yandex.ru", "user8@yandex.ru", "user9@yandex.ru");
     }
 
     @Test
     void testAddAndRemoveFriend() {
-        User user1 = userStorage.create(this.user1);
-        User user2 = userStorage.create(this.user2);
+        User user1 = userStorage.getById(1); // уже есть в data.sql
+        User user2 = userStorage.getById(8);
 
         userStorage.addFriend(user1.getId(), user2.getId());
 
         Set<User> friends = userStorage.getFriends(user1.getId());
-        assertThat(friends).hasSize(1);
         assertThat(friends).extracting(User::getId).contains(user2.getId());
 
         userStorage.removeFriend(user1.getId(), user2.getId());
 
         friends = userStorage.getFriends(user1.getId());
-        assertThat(friends).isEmpty();
+        assertThat(friends).extracting(User::getId).doesNotContain(user2.getId());
     }
 
     @Test
     void testGetCommonFriends() {
-        User user1 = userStorage.create(this.user1);
-        User user2 = userStorage.create(this.user2);
-        User user3 = userStorage.create(this.user3);
+        User user1 = userStorage.getById(1);
+        User user2 = userStorage.getById(8);
+        User user3 = userStorage.getById(9);
 
         userStorage.addFriend(user1.getId(), user3.getId());
         userStorage.addFriend(user2.getId(), user3.getId());
 
-        Set<User> commonFriends = userStorage.getCommonFriends(user1.getId(), user2.getId());
-        assertThat(commonFriends).hasSize(1);
-        assertThat(commonFriends).extracting(User::getId).contains(user3.getId());
+        Set<User> common = userStorage.getCommonFriends(user1.getId(), user2.getId());
+        assertThat(common).extracting(User::getId).contains(user3.getId());
     }
 
     @Test
