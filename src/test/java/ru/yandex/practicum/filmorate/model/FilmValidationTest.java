@@ -77,6 +77,7 @@ public class FilmValidationTest {
         film.setDescription("Фильм о космосе");
         film.setReleaseDate(LocalDate.of(2014, 11, 7));
         film.setDuration(169);
+        film.setMpa(1);
 
         Set<ConstraintViolation<Film>> violations = validator.validate(film);
         assertTrue(violations.isEmpty());
