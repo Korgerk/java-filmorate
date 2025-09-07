@@ -1,39 +1,36 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import ru.yandex.practicum.filmorate.model.MpaRating;
+import ru.yandex.practicum.filmorate.service.MpaService;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/mpa")
 public class MpaController {
-
-    private final JdbcTemplate jdbcTemplate;
+    private final MpaService mpaService;
 
     @Autowired
-    public MpaController(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+    public MpaController(MpaService mpaService) {
+        this.mpaService = mpaService;
     }
 
     @GetMapping
-    public List<Map<String, Object>> getAll() {
-        return jdbcTemplate.queryForList("SELECT * FROM mpa_ratings ORDER BY id");
+    public List<MpaRating> getAll() {
+        log.info("Запрос на получение всех рейтингов MPA.");
+        return mpaService.getAll();
     }
 
     @GetMapping("/{id}")
-    public Map<String, Object> getById(@PathVariable int id) {
-        return jdbcTemplate.queryForObject("SELECT * FROM mpa_ratings WHERE id = ?", (rs, rowNum) -> {
-            Map<String, Object> mpa = new HashMap<>();
-            mpa.put("id", rs.getInt("id"));
-            mpa.put("name", rs.getString("name"));
-            return mpa;
-        }, id);
+    public MpaRating getById(@PathVariable int id) {
+        log.info("Запрос рейтинга MPA с id={}", id);
+        return mpaService.getById(id);
     }
 }

@@ -26,8 +26,4 @@ public class User {
     @PastOrPresent(message = "Дата рождения не может быть в будущем.")
     @NotNull(message = "Дата рождения обязательна.")
     LocalDate birthday;
-
-    public String getName() {
-        return name != null && !name.isBlank() ? name : login;
-    }
 }

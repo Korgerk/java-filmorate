@@ -1,40 +1,28 @@
 package ru.yandex.practicum.filmorate.exception;
 
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<String> handleMethodArgumentNotValid(MethodArgumentNotValidException e) {
-        String errorMessage = e.getBindingResult().getFieldErrors().stream().map(error -> error.getField() + ": " + error.getDefaultMessage()).collect(Collectors.joining(", "));
-        return ResponseEntity.status(400).contentType(MediaType.TEXT_PLAIN).body(errorMessage);
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, String> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getFieldErrors().forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
+        return errors;
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<String> handleValidationException(MethodArgumentNotValidException e) {
-        String errorMessage = e.getBindingResult().getFieldErrors().stream().map(error -> error.getField() + ": " + error.getDefaultMessage()).collect(Collectors.joining(", "));
-        return ResponseEntity.status(400).contentType(MediaType.TEXT_PLAIN).body(errorMessage);
-    }
-
-    @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<String> handleUserNotFoundException(UserNotFoundException e) {
-        return ResponseEntity.status(404).contentType(MediaType.TEXT_PLAIN).body(e.getMessage());
-    }
-
-    @ExceptionHandler(FilmNotFoundException.class)
-    public ResponseEntity<String> handleFilmNotFoundException(FilmNotFoundException e) {
-        return ResponseEntity.status(404).contentType(MediaType.TEXT_PLAIN).body(e.getMessage());
-    }
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<String> handleUnexpectedException(Exception e) {
-        return ResponseEntity.status(500).contentType(MediaType.TEXT_PLAIN).body("Внутренняя ошибка сервера");
+    @ExceptionHandler(ValidationException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public Map<String, String> handleNotFoundException(ValidationException e) {
+        return Map.of("error", e.getMessage());
     }
 }

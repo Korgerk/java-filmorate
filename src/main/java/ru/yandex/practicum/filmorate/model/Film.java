@@ -9,12 +9,13 @@ import lombok.experimental.FieldDefaults;
 import ru.yandex.practicum.filmorate.validation.ValidReleaseDate;
 
 import java.time.LocalDate;
-import java.util.List;
+import java.util.Set;
 
 import static lombok.AccessLevel.PRIVATE;
 
 @Data
 @FieldDefaults(level = PRIVATE)
+@ValidReleaseDate
 public class Film {
     Integer id;
 
@@ -25,14 +26,12 @@ public class Film {
     String description;
 
     @NotNull(message = "Дата релиза обязательна.")
-    @ValidReleaseDate
     LocalDate releaseDate;
 
     @Positive(message = "Продолжительность фильма должна быть положительной.")
     Integer duration;
 
-    @NotNull(message = "Рейтинг MPA обязателен.")
-    Integer mpa;
+    MpaRating mpa;
 
-    List<Integer> genres;
+    Set<Genre> genres;
 }
