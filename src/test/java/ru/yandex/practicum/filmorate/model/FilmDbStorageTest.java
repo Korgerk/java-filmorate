@@ -101,20 +101,24 @@ class FilmDbStorageTest {
         film1.setName("Popular Film");
         film1.setReleaseDate(LocalDate.of(2020, 1, 1));
         film1.setDuration(120);
-        film1.setMpa(new MpaRating() {{
-            setId(1);
-            setName("G");
-        }});
+        film1.setMpa(new MpaRating() {
+            {
+                setId(1);
+                setName("G");
+            }
+        });
         Film createdFilm1 = filmStorage.create(film1);
 
         Film film2 = new Film();
         film2.setName("Less Popular");
         film2.setReleaseDate(LocalDate.of(2020, 1, 1));
         film2.setDuration(120);
-        film2.setMpa(new MpaRating() {{
-            setId(1);
-            setName("G");
-        }});
+        film2.setMpa(new MpaRating() {
+            {
+                setId(1);
+                setName("G");
+            }
+        });
         Film createdFilm2 = filmStorage.create(film2);
 
         filmStorage.addLike(createdFilm1.getId(), 1);
