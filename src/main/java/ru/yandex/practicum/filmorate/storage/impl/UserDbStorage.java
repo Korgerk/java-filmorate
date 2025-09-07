@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @RequiredArgsConstructor
-@Component
+@Repository("userDbStorage")
 public class UserDbStorage implements UserStorage {
     private final JdbcTemplate jdbcTemplate;
 
@@ -93,8 +93,9 @@ public class UserDbStorage implements UserStorage {
         if (!exists(userId)) throw new ValidationException("Пользователь с id=" + userId + " не найден.");
         if (!exists(friendId)) throw new ValidationException("Пользователь с id=" + friendId + " не найден.");
 
-        String sql = "INSERT INTO user_friends (user_id, friend_id, confirmed) VALUES (?, ?, ?)";
-        jdbcTemplate.update(sql, userId, friendId, false);
+        // Односторонняя дружба
+        String sql = "INSERT INTO user_friends (user_id, friend_id) VALUES (?, ?)";
+        jdbcTemplate.update(sql, userId, friendId);
     }
 
     @Override

@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @RequiredArgsConstructor
-@Component
+@Repository("filmDbStorage")
 public class FilmDbStorage implements FilmStorage {
     private final JdbcTemplate jdbcTemplate;
 
@@ -160,7 +160,7 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> getPopular(int count) {
-        String sql = "SELECT f.*, mr.id as mpa_rating_id, mr.name as mpa_name, COUNT(fl.user_id) as likes_count " + "FROM films f " + "LEFT JOIN mpa_ratings mr ON f.mpa_rating_id = mr.id " + "LEFT JOIN film_likes fl ON f.id = fl.film_id " + "GROUP BY f.id, mr.id, mr.name " + "ORDER BY likes_count DESC " + "LIMIT ?";
+        String sql = "SELECT f.*, mr.id as mpa_rating_id, mr.name as mpa_name, COUNT(fl.user_id) as likes_count " + "FROM films f " + "LEFT JOIN mpa_ratings mr ON f.mpa_rating_id = mr.id " + "LEFT JOIN film_likes fl ON f.id = fl.film_id " + "GROUP BY f.id, mr.id, mr.name " + "ORDER BY COUNT(fl.user_id) DESC " + "LIMIT ?";
 
         List<Film> films = jdbcTemplate.query(sql, (rs, rowNum) -> {
             Film film = new Film();

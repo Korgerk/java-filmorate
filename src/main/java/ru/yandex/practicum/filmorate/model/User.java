@@ -1,6 +1,9 @@
 package ru.yandex.practicum.filmorate.model;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
 
@@ -18,12 +21,28 @@ public class User {
     String email;
 
     @NotBlank(message = "Логин не может быть пустым.")
-    @Pattern(regexp = "\\S+", message = "Логин не должен содержать пробелов.")
+    @Pattern(regexp = "^\\S+$", message = "Логин не должен содержать пробелов.")
     String login;
 
     String name;
 
     @PastOrPresent(message = "Дата рождения не может быть в будущем.")
-    @NotNull(message = "Дата рождения обязательна.")
     LocalDate birthday;
+
+    // Геттер для имени с логином по умолчанию
+    public String getName() {
+        if (name == null || name.isBlank()) {
+            return login;
+        }
+        return name;
+    }
+
+    // Метод для установки имени с логином по умолчанию
+    public void setName(String name) {
+        if (name == null || name.isBlank()) {
+            this.name = this.login;
+        } else {
+            this.name = name;
+        }
+    }
 }
