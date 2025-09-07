@@ -1,9 +1,10 @@
 package ru.yandex.practicum.filmorate.model;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
-import org.springframework.test.context.ContextConfiguration;
+import org.springframework.context.annotation.Import;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.storage.impl.UserDbStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
@@ -15,23 +16,41 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @JdbcTest
-@ContextConfiguration(classes = {UserDbStorage.class})
+@Import(UserDbStorage.class)
 class UserDbStorageTest {
+
     @Autowired
     private UserStorage userStorage;
 
+    private User user1, user2, user3;
+
+    @BeforeEach
+    void setUp() {
+        user1 = new User();
+        user1.setEmail("user1@example.com");
+        user1.setLogin("user1");
+        user1.setName("User One");
+        user1.setBirthday(LocalDate.of(1990, 1, 1));
+
+        user2 = new User();
+        user2.setEmail("user2@example.com");
+        user2.setLogin("user2");
+        user2.setName("User Two");
+        user2.setBirthday(LocalDate.of(1990, 1, 1));
+
+        user3 = new User();
+        user3.setEmail("user3@example.com");
+        user3.setLogin("user3");
+        user3.setName("User Three");
+        user3.setBirthday(LocalDate.of(1990, 1, 1));
+    }
+
     @Test
     void testCreateAndFindUserById() {
-        User user = new User();
-        user.setEmail("test@example.com");
-        user.setLogin("testuser");
-        user.setName("Test User");
-        user.setBirthday(LocalDate.of(1990, 1, 1));
-
-        User createdUser = userStorage.create(user);
+        User createdUser = userStorage.create(user1);
 
         assertThat(createdUser.getId()).isNotNull();
-        assertThat(createdUser.getEmail()).isEqualTo("test@example.com");
+        assertThat(createdUser.getEmail()).isEqualTo("user1@example.com");
 
         User foundUser = userStorage.getById(createdUser.getId());
         assertThat(foundUser).usingRecursiveComparison().isEqualTo(createdUser);
@@ -39,16 +58,7 @@ class UserDbStorageTest {
 
     @Test
     void testUpdateUser() {
-        // Создаем пользователя
-        User user = new User();
-        user.setEmail("test@example.com");
-        user.setLogin("testuser");
-        user.setName("Test User");
-        user.setBirthday(LocalDate.of(1990, 1, 1));
-
-        User createdUser = userStorage.create(user);
-
-        // Обновляем пользователя
+        User createdUser = userStorage.create(user1);
         createdUser.setName("Updated Name");
         createdUser.setEmail("updated@example.com");
 
@@ -60,17 +70,7 @@ class UserDbStorageTest {
 
     @Test
     void testGetAllUsers() {
-        // Создаем нескольких пользователей
-        User user1 = new User();
-        user1.setEmail("user1@example.com");
-        user1.setLogin("user1");
-        user1.setBirthday(LocalDate.of(1990, 1, 1));
         userStorage.create(user1);
-
-        User user2 = new User();
-        user2.setEmail("user2@example.com");
-        user2.setLogin("user2");
-        user2.setBirthday(LocalDate.of(1990, 1, 1));
         userStorage.create(user2);
 
         Set<User> allUsers = userStorage.getAll();
@@ -81,27 +81,15 @@ class UserDbStorageTest {
 
     @Test
     void testAddAndRemoveFriend() {
-        // Создаем двух пользователей
-        User user1 = new User();
-        user1.setEmail("user1@example.com");
-        user1.setLogin("user1");
-        user1.setBirthday(LocalDate.of(1990, 1, 1));
-        userStorage.create(user1);
+        User user1 = userStorage.create(this.user1);
+        User user2 = userStorage.create(this.user2);
 
-        User user2 = new User();
-        user2.setEmail("user2@example.com");
-        user2.setLogin("user2");
-        user2.setBirthday(LocalDate.of(1990, 1, 1));
-        userStorage.create(user2);
-
-        // Добавляем в друзья
         userStorage.addFriend(user1.getId(), user2.getId());
 
         Set<User> friends = userStorage.getFriends(user1.getId());
         assertThat(friends).hasSize(1);
         assertThat(friends).extracting(User::getId).contains(user2.getId());
 
-        // Удаляем из друзей
         userStorage.removeFriend(user1.getId(), user2.getId());
 
         friends = userStorage.getFriends(user1.getId());
@@ -110,26 +98,10 @@ class UserDbStorageTest {
 
     @Test
     void testGetCommonFriends() {
-        // Создаем трех пользователей
-        User user1 = new User();
-        user1.setEmail("user1@example.com");
-        user1.setLogin("user1");
-        user1.setBirthday(LocalDate.of(1990, 1, 1));
-        userStorage.create(user1);
+        User user1 = userStorage.create(this.user1);
+        User user2 = userStorage.create(this.user2);
+        User user3 = userStorage.create(this.user3);
 
-        User user2 = new User();
-        user2.setEmail("user2@example.com");
-        user2.setLogin("user2");
-        user2.setBirthday(LocalDate.of(1990, 1, 1));
-        userStorage.create(user2);
-
-        User user3 = new User();
-        user3.setEmail("user3@example.com");
-        user3.setLogin("user3");
-        user3.setBirthday(LocalDate.of(1990, 1, 1));
-        userStorage.create(user3);
-
-        // Устанавливаем дружбу
         userStorage.addFriend(user1.getId(), user3.getId());
         userStorage.addFriend(user2.getId(), user3.getId());
 

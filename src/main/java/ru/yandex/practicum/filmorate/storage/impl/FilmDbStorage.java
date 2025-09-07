@@ -1,11 +1,11 @@
 package ru.yandex.practicum.filmorate.storage.impl;
 
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MpaRating;
@@ -110,17 +110,14 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Film getById(int id) {
-        if (!exists(id)) {
-            throw new ValidationException("Фильм с id=" + id + " не найден.");
-        }
-
         String sql = "SELECT f.*, mr.id as mpa_rating_id, mr.name as mpa_name " + "FROM films f " + "LEFT JOIN mpa_ratings mr ON f.mpa_rating_id = mr.id " + "WHERE f.id = ?";
 
         try {
             Film film = jdbcTemplate.queryForObject(sql, filmRowMapper, id);
-            if (film != null) {
-                film.setGenres(getGenresForFilm(id));
+            if (film == null) {
+                throw new ValidationException("Фильм с id=" + id + " не найден.");
             }
+            film.setGenres(getGenresForFilm(id));
             return film;
         } catch (EmptyResultDataAccessException e) {
             throw new ValidationException("Фильм с id=" + id + " не найден.");
