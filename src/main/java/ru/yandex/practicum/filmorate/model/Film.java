@@ -19,7 +19,7 @@ import java.util.Set;
 @Setter
 public class Film {
     @JsonIgnore
-    final private Set<Integer> likes = new HashSet<>();
+    private final Set<Integer> likes = new HashSet<>();
     private int id;
     @NotBlank
     private String name;
