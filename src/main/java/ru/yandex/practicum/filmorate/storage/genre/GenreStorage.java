@@ -3,11 +3,8 @@ package ru.yandex.practicum.filmorate.storage.genre;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
-
 import ru.yandex.practicum.filmorate.expectation.GenreNotFoundException;
-import ru.yandex.practicum.filmorate.expectation.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 
@@ -44,8 +41,7 @@ public class GenreStorage {
     public void add(Film film) {
         if (film.getGenres() != null) {
             for (Genre genre : film.getGenres()) {
-                jdbcTemplate.update("INSERT INTO film_genres (film_id, genre_id) VALUES (?, ?)",
-                        film.getId(), genre.getId());
+                jdbcTemplate.update("INSERT INTO film_genres (film_id, genre_id) VALUES (?, ?)", film.getId(), genre.getId());
             }
         }
     }
