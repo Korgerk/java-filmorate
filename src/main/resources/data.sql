@@ -13,7 +13,7 @@ MERGE INTO genres (id, name) VALUES (4, 'Триллер');
 MERGE INTO genres (id, name) VALUES (5, 'Документальный');
 MERGE INTO genres (id, name) VALUES (6, 'Боевик');
 
-
+-- Test Users
 MERGE INTO users (id, email, login, name, birthday) VALUES (1, 'user1@yandex.ru', 'user1', 'User One', '1990-01-01');
 MERGE INTO users (id, email, login, name, birthday) VALUES (8, 'user8@yandex.ru', 'user8', 'User Eight', '1990-01-01');
 MERGE INTO users (id, email, login, name, birthday) VALUES (9, 'user9@yandex.ru', 'user9', 'User Nine', '1990-01-01');
