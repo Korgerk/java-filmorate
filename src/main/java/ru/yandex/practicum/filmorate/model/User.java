@@ -28,7 +28,9 @@ public class User {
     private String name;
     @PastOrPresent
     @NotNull
-    private LocalDate birthday;@NotNull
+    private LocalDate birthday;
+
+    @NotNull
 
     public void addFriend(Integer id) {
         friendIds.add(id);

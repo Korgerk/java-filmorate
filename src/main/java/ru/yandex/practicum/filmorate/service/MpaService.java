@@ -1,11 +1,9 @@
 package ru.yandex.practicum.filmorate.service;
 
 import org.springframework.stereotype.Service;
-
 import ru.yandex.practicum.filmorate.expectation.NotFoundException;
 import ru.yandex.practicum.filmorate.model.MpaRating;
 import ru.yandex.practicum.filmorate.storage.mpa.RatingMpaDbStorage;
-
 
 import java.util.List;
 
