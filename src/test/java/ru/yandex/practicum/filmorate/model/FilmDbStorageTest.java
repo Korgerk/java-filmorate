@@ -1,9 +1,11 @@
 package ru.yandex.practicum.filmorate.model;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
-import org.springframework.test.context.ContextConfiguration;
+import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.JdbcTemplate;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.film.impl.FilmDbStorage;
 import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
@@ -20,8 +22,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @JdbcTest
-@ContextConfiguration(classes = {FilmDbStorage.class, GenreDbStorage.class, MpaDbStorage.class, UserDbStorage.class  // Добавляем UserDbStorage, чтобы можно было создавать пользователей
-})
+@Import({FilmDbStorage.class, UserDbStorage.class, GenreDbStorage.class, MpaDbStorage.class})
 class FilmDbStorageTest {
 
     @Autowired
@@ -36,10 +37,19 @@ class FilmDbStorageTest {
     @Autowired
     private GenreStorage genreStorage;
 
-    // Вспомогательный метод для создания пользователя
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     private User createUser(String email, String login) {
         User user = User.builder().email(email).login(login).birthday(LocalDate.of(1990, 1, 1)).build();
         return userStorage.create(user);
+    }
+
+    @BeforeEach
+    void setUp() {
+        // Убедимся, что MPA и Genres загружены
+        assertThat(mpaStorage.getById(1)).isNotNull();
+        assertThat(genreStorage.getById(1)).isNotNull();
     }
 
     @Test
@@ -64,6 +74,7 @@ class FilmDbStorageTest {
         film.setName("After");
         film.setDescription("After");
         film.setDuration(150);
+
         Film updated = filmStorage.update(film);
 
         assertThat(updated.getName()).isEqualTo("After");
@@ -73,37 +84,27 @@ class FilmDbStorageTest {
 
     @Test
     void shouldAddLikeAndGetPopular() {
-        // Создаём пользователей
         User user1 = createUser("u1@example.com", "u1");
         User user2 = createUser("u2@example.com", "u2");
 
-        // Создаём фильм
-        Film film = filmStorage.create(Film.builder().name("Film").description("Desc").releaseDate(LocalDate.of(2000, 1, 1)).duration(100).mpa(mpaStorage.getById(1)).build());
+        Film film = filmStorage.create(Film.builder().name("Popular Film").description("Desc").releaseDate(LocalDate.of(2000, 1, 1)).duration(100).mpa(mpaStorage.getById(1)).build());
 
-        // Добавляем лайки
         filmStorage.addLike(film.getId(), user1.getId());
         filmStorage.addLike(film.getId(), user2.getId());
 
-        // Получаем популярные
         List<Film> popular = filmStorage.getPopular(10);
 
-        assertThat(popular).hasSize(1);
-        assertThat(popular.get(0).getId()).isEqualTo(film.getId());
+        assertThat(popular).hasSize(1).first().satisfies(f -> assertThat(f.getId()).isEqualTo(film.getId()));
     }
 
     @Test
     void shouldRemoveLike() {
-        // Создаём пользователя
         User user = createUser("u1@example.com", "u1");
-
-        // Создаём фильм
         Film film = filmStorage.create(Film.builder().name("Film").description("Desc").releaseDate(LocalDate.of(2000, 1, 1)).duration(100).mpa(mpaStorage.getById(1)).build());
 
-        // Добавляем и удаляем лайк
         filmStorage.addLike(film.getId(), user.getId());
         filmStorage.removeLike(film.getId(), user.getId());
 
-        // Проверяем, что фильм не в топе
         List<Film> popular = filmStorage.getPopular(10);
         assertThat(popular).doesNotContain(film);
     }

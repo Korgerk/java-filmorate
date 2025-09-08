@@ -37,6 +37,11 @@ public class GenreDbStorage implements GenreStorage {
         }
     }
 
+    @Override
+    public boolean exists(int id) {
+        return false;
+    }
+
     private Genre mapRowToGenre(ResultSet rs, int rowNum) throws SQLException {
         return new Genre(rs.getInt("id"), rs.getString("name"));
     }

@@ -73,11 +73,23 @@ class UserDbStorageTest {
 
     @Test
     void shouldGetCommonFriends() {
-        User user1 = userStorage.create(User.builder().email("u1@example.com").login("u1").birthday(LocalDate.of(1990, 1, 1)).build());
+        User user1 = userStorage.create(User.builder()
+                .email("u1@example.com")
+                .login("u1")
+                .birthday(LocalDate.of(1990, 1, 1))
+                .build());
 
-        User user2 = userStorage.create(User.builder().email("u2@example.com").login("u2").birthday(LocalDate.of(1990, 1, 1)).build());
+        User user2 = userStorage.create(User.builder()
+                .email("u2@example.com")
+                .login("u2")
+                .birthday(LocalDate.of(1990, 1, 1))
+                .build());
 
-        User user3 = userStorage.create(User.builder().email("u3@example.com").login("u3").birthday(LocalDate.of(1990, 1, 1)).build());
+        User user3 = userStorage.create(User.builder()
+                .email("u3@example.com")
+                .login("u3")
+                .birthday(LocalDate.of(1990, 1, 1))
+                .build());
 
         userStorage.addFriend(user1.getId(), user3.getId());
         userStorage.addFriend(user2.getId(), user3.getId());

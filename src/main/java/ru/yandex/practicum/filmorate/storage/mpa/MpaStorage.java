@@ -8,4 +8,6 @@ public interface MpaStorage {
     List<MpaRating> getAll();
 
     MpaRating getById(int id);
+
+    boolean exists(int id);
 }

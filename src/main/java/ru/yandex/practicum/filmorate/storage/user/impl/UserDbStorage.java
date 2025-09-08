@@ -28,7 +28,6 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public User create(User user) {
-        // Если name не задан, устанавливаем login
         if (user.getName() == null || user.getName().trim().isEmpty()) {
             user.setName(user.getLogin());
         }
@@ -38,7 +37,7 @@ public class UserDbStorage implements UserStorage {
         Map<String, Object> map = new HashMap<>();
         map.put("email", user.getEmail());
         map.put("login", user.getLogin());
-        map.put("name", user.getName()); // уже установлено
+        map.put("name", user.getName());
         map.put("birthday", user.getBirthday());
 
         Number key = insert.executeAndReturnKey(map);

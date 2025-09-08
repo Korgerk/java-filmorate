@@ -5,6 +5,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
@@ -32,6 +33,17 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Film create(Film film) {
+        if (film.getGenres() == null) {
+            film.setGenres(new HashSet<>());
+        }
+        if (!mpaStorage.exists(film.getMpa().getId())) {
+            throw new ValidationException("MPA с id=" + film.getMpa().getId() + " не найден.");
+        }
+        for (Genre genre : film.getGenres()) {
+            if (!genreStorage.exists(genre.getId())) {
+                throw new ValidationException("Жанр с id=" + genre.getId() + " не найден.");
+            }
+        }
         SimpleJdbcInsert insert = new SimpleJdbcInsert(jdbcTemplate).withTableName("films").usingGeneratedKeyColumns("id");
 
         Map<String, Object> map = new HashMap<>();
@@ -44,8 +56,17 @@ public class FilmDbStorage implements FilmStorage {
         Number key = insert.executeAndReturnKey(map);
         film.setId(key.intValue());
 
+        saveFilmGenres(film.getId(), film.getGenres());
+
         updateGenres(film.getId(), film.getGenres());
         return film;
+    }
+
+    private void saveFilmGenres(int filmId, Set<Genre> genres) {
+        String sql = "INSERT INTO film_genres (film_id, genre_id) VALUES (?, ?)";
+        for (Genre genre : genres) {
+            jdbcTemplate.update(sql, filmId, genre.getId());
+        }
     }
 
     @Override
