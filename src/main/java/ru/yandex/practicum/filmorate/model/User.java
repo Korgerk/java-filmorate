@@ -18,7 +18,7 @@ import java.util.Set;
 @AllArgsConstructor
 public class User {
     @JsonIgnore
-    final private Set<Integer> friendIds = new HashSet<>();
+    private final Set<Integer> friendIds = new HashSet<>();
     private int id;
     @Email
     @NotBlank
