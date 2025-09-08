@@ -1,26 +1,29 @@
 package ru.yandex.practicum.filmorate.service;
 
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.MpaRating;
+import ru.yandex.practicum.filmorate.storage.mpa.MpaStorage;
 
-import java.util.List;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.stream.Collectors;
 
 @Service
 public class MpaService {
-    private final JdbcTemplate jdbcTemplate;
 
-    public MpaService(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+    private MpaStorage mpaStorage;
+
+    @Autowired
+    public MpaService(MpaStorage mpaStorage) {
+        this.mpaStorage = mpaStorage;
     }
 
-    public List<MpaRating> getAll() {
-        String sql = "SELECT * FROM mpa_ratings ORDER BY id";
-        return jdbcTemplate.query(sql, (rs, rowNum) -> new MpaRating(rs.getInt("id"), rs.getString("name")));
+    public Collection<MpaRating> getAllMpa() {
+        return mpaStorage.getAllMpa().stream().sorted(Comparator.comparing(MpaRating::getId)).collect(Collectors.toList());
     }
 
-    public MpaRating getById(Integer id) {
-        String sql = "SELECT * FROM mpa_ratings WHERE id = ?";
-        return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> new MpaRating(rs.getInt("id"), rs.getString("name")), id);
+    public MpaRating getMpaById(Integer id) {
+        return mpaStorage.getMpaById(id);
     }
 }

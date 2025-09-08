@@ -1,39 +1,47 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/users")
+@Slf4j
 public class UserController {
-    private final UserService userService;
+    private UserStorage userStorage;
+    private UserService userService;
 
-    public UserController(UserService userService) {
+    @Autowired
+    public UserController(@Qualifier("userDbStorage") UserStorage userStorage, UserService userService) {
+        this.userStorage = userStorage;
         this.userService = userService;
     }
 
-    @PostMapping
-    public User createUser(@RequestBody User user) {
-        return userService.createUser(user);
-    }
-
-    @PutMapping
-    public User updateUser(@RequestBody User user) {
-        return userService.updateUser(user);
+    @GetMapping
+    public List<User> getUsers() {
+        return userStorage.getUsers();
     }
 
     @GetMapping("/{id}")
-    public Optional<User> getUserById(@PathVariable Long id) {
-        return userService.findUserById(id);
+    public User getUserById(@PathVariable Long id) {
+        return userStorage.getUserById(id);
     }
 
-    @GetMapping
-    public List<User> getAllUsers() {
-        return userService.getAllUsers();
+    @GetMapping("/{id}/friends")
+    public List<User> getFriends(@PathVariable Long id) {
+        return userService.getFriends(id);
+    }
+
+    @GetMapping("/{id}/friends/common/{otherId}")
+    public List<User> getCommonFriends(@PathVariable Long id, @PathVariable Long otherId) {
+        return userService.getCommonFriends(id, otherId);
     }
 
     @PutMapping("/{id}/friends/{friendId}")
@@ -41,23 +49,33 @@ public class UserController {
         userService.addFriend(id, friendId);
     }
 
-    @PutMapping("/{id}/friends/{friendId}/confirm")
-    public void confirmFriend(@PathVariable Long id, @PathVariable Long friendId) {
-        userService.confirmFriend(id, friendId);
-    }
-
     @DeleteMapping("/{id}/friends/{friendId}")
-    public void removeFriend(@PathVariable Long id, @PathVariable Long friendId) {
-        userService.removeFriend(id, friendId);
+    public void deleteFriend(@PathVariable Long id, @PathVariable Long friendId) {
+        userService.deleteFriend(id, friendId);
     }
 
-    @GetMapping("/{id}/friends")
-    public List<User> getUserFriends(@PathVariable Long id) {
-        return userService.getUserFriends(id);
+    @ResponseBody
+    @PostMapping
+    public User create(@Valid @RequestBody User user) {
+        log.info("Получен POST-запрос к эндпоинту: '/users' на добавление пользователя");
+        if (user.getName() == null || user.getName().trim().isEmpty()) {
+            user.setName(user.getLogin());
+        }
+        user = userStorage.create(user);
+        return user;
     }
 
-    @GetMapping("/{id}/friends/common/{otherId}")
-    public List<User> getCommonFriends(@PathVariable Long id, @PathVariable Long otherId) {
-        return userService.getCommonFriends(id, otherId);
+    @ResponseBody
+    @PutMapping
+    public User update(@Valid @RequestBody User user) {
+        log.info("Получен PUT-запрос к эндпоинту: '/users' на обновление пользователя с ID={}", user.getId());
+        user = userStorage.update(user);
+        return user;
+    }
+
+    @DeleteMapping("/{id}")
+    public User delete(@PathVariable Long id) {
+        log.info("Получен DELETE-запрос к эндпоинту: '/users' на удаление пользователя с ID={}", id);
+        return userStorage.delete(id);
     }
 }

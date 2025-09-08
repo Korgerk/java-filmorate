@@ -1,26 +1,40 @@
 package ru.yandex.practicum.filmorate.service;
 
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class GenreService {
-    private final JdbcTemplate jdbcTemplate;
 
-    public GenreService(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+    private GenreStorage genreStorage;
+
+    @Autowired
+    public GenreService(GenreStorage genreStorage) {
+        this.genreStorage = genreStorage;
     }
 
-    public List<Genre> getAll() {
-        String sql = "SELECT * FROM genres ORDER BY id";
-        return jdbcTemplate.query(sql, (rs, rowNum) -> new Genre(rs.getInt("id"), rs.getString("name")));
+    public Collection<Genre> getGenres() {
+        return genreStorage.getGenres().stream()
+                .sorted(Comparator.comparing(Genre::getId))
+                .collect(Collectors.toList());
     }
 
-    public Genre getById(Integer id) {
-        String sql = "SELECT * FROM genres WHERE id = ?";
-        return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> new Genre(rs.getInt("id"), rs.getString("name")), id);
+    public Genre getGenreById(Integer id) {
+        return genreStorage.getGenreById(id);
+    }
+
+    public void putGenres(Film film) {
+        genreStorage.delete(film);
+        genreStorage.add(film);
+    }
+
+    public Set<Genre> getFilmGenres(Long filmId) {
+        return new HashSet<>(genreStorage.getFilmGenres(filmId));
     }
 }
