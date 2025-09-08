@@ -1,24 +1,26 @@
 package ru.yandex.practicum.filmorate.service;
 
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 
 import java.util.List;
 
 @Service
 public class GenreService {
-    private final GenreStorage genreStorage;
+    private final JdbcTemplate jdbcTemplate;
 
-    public GenreService(GenreStorage genreStorage) {
-        this.genreStorage = genreStorage;
+    public GenreService(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     public List<Genre> getAll() {
-        return genreStorage.getAll();
+        String sql = "SELECT * FROM genres ORDER BY id";
+        return jdbcTemplate.query(sql, (rs, rowNum) -> new Genre(rs.getInt("id"), rs.getString("name")));
     }
 
-    public Genre getById(int id) {
-        return genreStorage.getById(id);
+    public Genre getById(Integer id) {
+        String sql = "SELECT * FROM genres WHERE id = ?";
+        return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> new Genre(rs.getInt("id"), rs.getString("name")), id);
     }
 }

@@ -1,34 +1,26 @@
 package ru.yandex.practicum.filmorate.model;
 
-import jakarta.validation.constraints.*;
-import lombok.Data;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.Email;
 import lombok.AllArgsConstructor;
-import lombok.experimental.FieldDefaults;
-import java.time.LocalDate;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import static lombok.AccessLevel.PRIVATE;
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
-@Builder
-@NoArgsConstructor
 @AllArgsConstructor
-@FieldDefaults(level = PRIVATE)
+@NoArgsConstructor
+@Builder
 public class User {
-    Integer id;
-
-    @Email(message = "Email должен быть в формате user@example.com.")
-    @NotBlank(message = "Email не может быть пустым.")
-    String email;
-
-    @NotBlank(message = "Логин не может быть пустым.")
-    @Pattern(regexp = "\\S+", message = "Логин не должен содержать пробелов.")
-    String login;
-
-    String name;
-
-    @PastOrPresent(message = "Дата рождения не может быть в будущем.")
-    @NotNull(message = "Дата рождения обязательна.")
-    LocalDate birthday;
+    private Long id;
+    @Email
+    private String email;
+    private String login;
+    private String name;
+    private LocalDate birthday;
+    @Builder.Default
+    private Set<Long> friends = new HashSet<>();
 }

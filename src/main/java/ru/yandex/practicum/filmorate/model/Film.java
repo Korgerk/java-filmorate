@@ -1,42 +1,29 @@
 package ru.yandex.practicum.filmorate.model;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 
-import static lombok.AccessLevel.PRIVATE;
-
-@Data
 @Builder
-@NoArgsConstructor
+@Data
 @AllArgsConstructor
-@FieldDefaults(level = PRIVATE)
+@NoArgsConstructor
 public class Film {
-    Integer id;
+    private Long id;
+    private String name;
+    private String description;
+    private LocalDate releaseDate;
+    private Integer duration;
+    private MpaRating mpa;
 
-    @NotBlank(message = "Название фильма не может быть пустым.")
-    String name;
-
-    @Size(max = 200, message = "Описание не может быть длиннее 200 символов.")
-    String description;
-
-    @NotNull(message = "Дата релиза обязательна.")
-    LocalDate releaseDate;
-
-    @Positive(message = "Продолжительность фильма должна быть положительной.")
-    Integer duration;
-
-    MpaRating mpa;
-
+    @Builder.Default
     private Set<Genre> genres = new HashSet<>();
+
+    @Builder.Default
+    private Set<Long> likes = new HashSet<>();
 }

@@ -1,37 +1,30 @@
 package ru.yandex.practicum.filmorate.controller;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.MpaRating;
 import ru.yandex.practicum.filmorate.service.MpaService;
 
 import java.util.List;
 
-@Slf4j
 @RestController
 @RequestMapping("/mpa")
-@RequiredArgsConstructor
 public class MpaController {
-
     private final MpaService mpaService;
 
+    public MpaController(MpaService mpaService) {
+        this.mpaService = mpaService;
+    }
+
     @GetMapping
-    public List<MpaRating> getAll() {
-        log.info("Получен запрос на получение всех рейтингов MPA");
+    public List<MpaRating> getAllMpa() {
         return mpaService.getAll();
     }
 
     @GetMapping("/{id}")
-    public MpaRating getById(@PathVariable int id) {
-        MpaRating mpa = mpaService.getById(id);
-        if (mpa == null) {
-            throw new NotFoundException("Рейтинг MPA с id=" + id + " не найден.");
-        }
-        return mpa;
+    public MpaRating getMpaById(@PathVariable Integer id) {
+        return mpaService.getById(id);
     }
 }

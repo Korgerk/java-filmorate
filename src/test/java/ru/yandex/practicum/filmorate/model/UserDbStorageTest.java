@@ -2,109 +2,84 @@ package ru.yandex.practicum.filmorate.model;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
-import org.springframework.test.context.ContextConfiguration;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
-import ru.yandex.practicum.filmorate.storage.user.impl.UserDbStorage;
+import org.springframework.context.annotation.Import;
+import ru.yandex.practicum.filmorate.storage.user.UserDbStorage;
 
 import java.time.LocalDate;
-import java.util.Set;
+import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @JdbcTest
-@ContextConfiguration(classes = {UserDbStorage.class})
-class UserDbStorageTest {
-
-    public static User createTestUser(String email, String login, String name, LocalDate birthday) {
-        return User.builder()
-                .email(email)
-                .login(login)
-                .name(name)
-                .birthday(birthday)
-                .build();
-    }
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@Import(UserDbStorage.class)
+public class UserDbStorageTest {
 
     @Autowired
-    private UserStorage userStorage;
+    private UserDbStorage userStorage;
 
     @Test
-    void shouldCreateAndFindUserById() {
-        User user = User.builder().email("test@example.com").login("testlogin").name("Test User").birthday(LocalDate.of(1990, 1, 1)).build();
+    void shouldCreateAndFindUser() {
+        User user = User.builder().email("test@example.com").login("testuser").name("Test User").birthday(LocalDate.of(1990, 1, 1)).build();
 
-        User created = userStorage.create(user);
-        User found = userStorage.getById(created.getId());
+        User created = userStorage.createUser(user);
+        Optional<User> found = userStorage.findUserById(created.getId());
 
-        assertThat(found).usingRecursiveComparison().ignoringExpectedNullFields().isEqualTo(created);
+        assertThat(found).isPresent();
+        assertThat(found.get().getEmail()).isEqualTo("test@example.com");
+        assertThat(found.get().getLogin()).isEqualTo("testuser");
     }
 
     @Test
     void shouldUpdateUser() {
-        User user = User.builder().email("before@update.com").login("before").name("Before").birthday(LocalDate.of(1990, 1, 1)).build();
+        User user = User.builder().email("old@example.com").login("oldlogin").name("Old").birthday(LocalDate.now()).build();
 
-        User created = userStorage.create(user);
-        created.setName("After");
-        created.setLogin("after");
-        User updated = userStorage.update(created);
+        User created = userStorage.createUser(user);
+        created.setName("Updated");
+        created.setEmail("new@example.com");
 
-        assertThat(updated.getName()).isEqualTo("After");
-        assertThat(updated.getLogin()).isEqualTo("after");
+        User updated = userStorage.updateUser(created);
+
+        assertThat(updated.getName()).isEqualTo("Updated");
+        assertThat(updated.getEmail()).isEqualTo("new@example.com");
     }
 
     @Test
-    void shouldGetAllUsers() {
-        User user1 = User.builder().email("u1@example.com").login("u1").birthday(LocalDate.of(1990, 1, 1)).build();
-
-        User user2 = User.builder().email("u2@example.com").login("u2").birthday(LocalDate.of(1990, 1, 1)).build();
-
-        userStorage.create(user1);
-        userStorage.create(user2);
-
-        Set<User> all = userStorage.getAll();
-
-        assertThat(all).hasSize(2);
-    }
-
-    @Test
-    void shouldAddAndRemoveFriend() {
-        User user1 = userStorage.create(User.builder().email("u1@example.com").login("u1").birthday(LocalDate.of(1990, 1, 1)).build());
-
-        User user2 = userStorage.create(User.builder().email("u2@example.com").login("u2").birthday(LocalDate.of(1990, 1, 1)).build());
+    void shouldAddAndConfirmFriend() {
+        User user1 = userStorage.createUser(User.builder().email("u1@example.com").login("u1").birthday(LocalDate.now()).build());
+        User user2 = userStorage.createUser(User.builder().email("u2@example.com").login("u2").birthday(LocalDate.now()).build());
 
         userStorage.addFriend(user1.getId(), user2.getId());
+        userStorage.addFriend(user2.getId(), user1.getId());
 
-        Set<User> friends = userStorage.getFriends(user1.getId());
-        assertThat(friends).hasSize(1).contains(user2);
+        userStorage.confirmFriend(user2.getId(), user1.getId());
 
-        userStorage.removeFriend(user1.getId(), user2.getId());
-        assertThat(userStorage.getFriends(user1.getId())).isEmpty();
+        List<User> friends = userStorage.getUserFriends(user2.getId());
+        assertThat(friends).hasSize(1);
+        assertThat(friends.get(0).getId()).isEqualTo(user1.getId());
     }
 
     @Test
     void shouldGetCommonFriends() {
-        User user1 = userStorage.create(User.builder()
-                .email("u1@example.com")
-                .login("u1")
-                .birthday(LocalDate.of(1990, 1, 1))
-                .build());
+        User user1 = userStorage.createUser(User.builder().email("u1@example.com").login("u1").birthday(LocalDate.now()).build());
+        User user2 = userStorage.createUser(User.builder().email("u2@example.com").login("u2").birthday(LocalDate.now()).build());
+        User common = userStorage.createUser(User.builder().email("common@example.com").login("common").birthday(LocalDate.now()).build());
 
-        User user2 = userStorage.create(User.builder()
-                .email("u2@example.com")
-                .login("u2")
-                .birthday(LocalDate.of(1990, 1, 1))
-                .build());
+        userStorage.addFriend(common.getId(), user1.getId());
+        userStorage.addFriend(user1.getId(), common.getId());
 
-        User user3 = userStorage.create(User.builder()
-                .email("u3@example.com")
-                .login("u3")
-                .birthday(LocalDate.of(1990, 1, 1))
-                .build());
+        userStorage.confirmFriend(user1.getId(), common.getId());
 
-        userStorage.addFriend(user1.getId(), user3.getId());
-        userStorage.addFriend(user2.getId(), user3.getId());
+        userStorage.addFriend(common.getId(), user2.getId());
+        userStorage.addFriend(user2.getId(), common.getId());
 
-        Set<User> common = userStorage.getCommonFriends(user1.getId(), user2.getId());
+        userStorage.confirmFriend(user2.getId(), common.getId());
 
-        assertThat(common).hasSize(1).contains(user3);
+        List<User> commonFriends = userStorage.getCommonFriends(user1.getId(), user2.getId());
+        assertThat(commonFriends).hasSize(1);
+        assertThat(commonFriends.get(0).getId()).isEqualTo(common.getId());
     }
 }

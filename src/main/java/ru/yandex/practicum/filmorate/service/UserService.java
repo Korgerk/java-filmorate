@@ -2,62 +2,53 @@ package ru.yandex.practicum.filmorate.service;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
-import java.util.Set;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserService {
-
     private final UserStorage userStorage;
 
     public UserService(@Qualifier("userDbStorage") UserStorage userStorage) {
         this.userStorage = userStorage;
     }
 
-    public User create(User user) {
-        return userStorage.create(user);
+    public User createUser(User user) {
+        return userStorage.createUser(user);
     }
 
-    public User update(User user) {
-        return userStorage.update(user);
+    public User updateUser(User user) {
+        return userStorage.updateUser(user);
     }
 
-    public User getById(int id) {
-        return userStorage.getById(id);
+    public Optional<User> findUserById(Long id) {
+        return userStorage.findUserById(id);
     }
 
-    public Set<User> getAll() {
-        return userStorage.getAll();
+    public List<User> getAllUsers() {
+        return userStorage.getAllUsers();
     }
 
-    public void addFriend(int userId, int friendId) {
-        if (!userStorage.exists(userId)) {
-            throw new ValidationException("Пользователь с id=" + userId + " не найден.");
-        }
-        if (!userStorage.exists(friendId)) {
-            throw new ValidationException("Пользователь с id=" + friendId + " не найден.");
-        }
+    public void addFriend(Long userId, Long friendId) {
         userStorage.addFriend(userId, friendId);
     }
 
-    public void removeFriend(int userId, int friendId) {
-        if (!userStorage.exists(userId)) {
-            throw new ValidationException("Пользователь с id=" + userId + " не найден.");
-        }
-        if (!userStorage.exists(friendId)) {
-            throw new ValidationException("Пользователь с id=" + friendId + " не найден.");
-        }
+    public void confirmFriend(Long userId, Long friendId) {
+        userStorage.confirmFriend(userId, friendId);
+    }
+
+    public void removeFriend(Long userId, Long friendId) {
         userStorage.removeFriend(userId, friendId);
     }
 
-    public Set<User> getFriends(int userId) {
-        return userStorage.getFriends(userId);
+    public List<User> getUserFriends(Long userId) {
+        return userStorage.getUserFriends(userId);
     }
 
-    public Set<User> getCommonFriends(int userId, int otherId) {
+    public List<User> getCommonFriends(Long userId, Long otherId) {
         return userStorage.getCommonFriends(userId, otherId);
     }
 }
