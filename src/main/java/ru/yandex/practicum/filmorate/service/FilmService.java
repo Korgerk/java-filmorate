@@ -1,6 +1,6 @@
 package ru.yandex.practicum.filmorate.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -13,13 +13,13 @@ import java.util.List;
 public class FilmService {
 
     private static final String FILM_NOT_FOUND_MSG = "Фильм с id=%d не найден.";
-    private static final String USER_NOT_FOUND_MSG = "Пользователь с id=%d не найден.";
 
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
 
-    @Autowired
-    public FilmService(FilmStorage filmStorage, UserStorage userStorage) {
+    public FilmService(
+            @Qualifier("filmDbStorage") FilmStorage filmStorage,
+            @Qualifier("userDbStorage") UserStorage userStorage) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
     }
@@ -29,15 +29,21 @@ public class FilmService {
     }
 
     public Film update(Film film) {
+        if (!filmStorage.exists(film.getId())) {
+            throw new ValidationException(String.format(FILM_NOT_FOUND_MSG, film.getId()));
+        }
         return filmStorage.update(film);
-    }
-
-    public Film getById(int id) {
-        return filmStorage.getById(id);
     }
 
     public List<Film> getAll() {
         return filmStorage.getAll();
+    }
+
+    public Film getById(int id) {
+        if (!filmStorage.exists(id)) {
+            throw new ValidationException(String.format(FILM_NOT_FOUND_MSG, id));
+        }
+        return filmStorage.getById(id);
     }
 
     public void addLike(int filmId, int userId) {
@@ -45,7 +51,7 @@ public class FilmService {
             throw new ValidationException(String.format(FILM_NOT_FOUND_MSG, filmId));
         }
         if (!userStorage.exists(userId)) {
-            throw new ValidationException(String.format(USER_NOT_FOUND_MSG, userId));
+            throw new ValidationException("Пользователь с id=" + userId + " не найден.");
         }
         filmStorage.addLike(filmId, userId);
     }
@@ -55,7 +61,7 @@ public class FilmService {
             throw new ValidationException(String.format(FILM_NOT_FOUND_MSG, filmId));
         }
         if (!userStorage.exists(userId)) {
-            throw new ValidationException(String.format(USER_NOT_FOUND_MSG, userId));
+            throw new ValidationException("Пользователь с id=" + userId + " не найден.");
         }
         filmStorage.removeLike(filmId, userId);
     }

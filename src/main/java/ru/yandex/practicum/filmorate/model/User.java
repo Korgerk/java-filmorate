@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.model;
 
 import jakarta.validation.constraints.*;
+import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
 
@@ -9,11 +10,12 @@ import java.time.LocalDate;
 import static lombok.AccessLevel.PRIVATE;
 
 @Data
+@Builder
 @FieldDefaults(level = PRIVATE)
 public class User {
     Integer id;
 
-    @Email(message = "Электронная почта должна быть в формате user@example.com.")
+    @Email(message = "Email не может быть пустым.")
     @NotBlank(message = "Email не может быть пустым.")
     String email;
 
