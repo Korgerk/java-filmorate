@@ -14,7 +14,6 @@ import java.util.Set;
 import static lombok.AccessLevel.PRIVATE;
 
 @Data
-@EqualsAndHashCode
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

@@ -142,7 +142,7 @@ public class FilmDbStorage implements FilmStorage {
         }
     }
 
-    private Set<Genre> getGenresByFilmId(int filmId) {
+    public Set<Genre> getGenresByFilmId(int filmId) {
         String sql = """
                 SELECT g.id, g.name FROM genres g
                 INNER JOIN film_genres fg ON g.id = fg.genre_id
@@ -154,7 +154,10 @@ public class FilmDbStorage implements FilmStorage {
     private class FilmRowMapper implements RowMapper<Film> {
         @Override
         public Film mapRow(ResultSet rs, int rowNum) throws SQLException {
-            return Film.builder().id(rs.getInt("id")).name(rs.getString("name")).description(rs.getString("description")).releaseDate(rs.getDate("release_date").toLocalDate()).duration(rs.getInt("duration")).mpa(mpaStorage.getById(rs.getInt("mpa_rating_id"))).build();
+            int filmId = rs.getInt("id");
+            Film film = Film.builder().id(filmId).name(rs.getString("name")).description(rs.getString("description")).releaseDate(rs.getDate("release_date").toLocalDate()).duration(rs.getInt("duration")).mpa(mpaStorage.getById(rs.getInt("mpa_rating_id"))).build();
+            film.setGenres(getGenresByFilmId(filmId));
+            return film;
         }
     }
 }
