@@ -107,14 +107,14 @@ public class UserDbStorage implements UserStorage {
         String sql = """
                 SELECT u.* FROM users u
                 WHERE u.id IN (
-                    SELECT friend_id FROM users_friends 
+                    SELECT friend_id FROM users_friends\s
                     WHERE user_id = ? AND confirmed = TRUE
                 )
                 OR u.id IN (
-                    SELECT user_id FROM users_friends 
+                    SELECT user_id FROM users_friends\s
                     WHERE friend_id = ? AND confirmed = TRUE
                 )
-                """;
+               \s""";
         List<User> friends = jdbcTemplate.query(sql, userRowMapper, userId, userId);
         friends.forEach(f -> f.setFriends(getUserFriendIds(f.getId())));
         return friends;
