@@ -1,53 +1,56 @@
 package ru.yandex.practicum.filmorate.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
-@Data
-@Builder
-@NoArgsConstructor
+@Builder(toBuilder = true)
+@AllArgsConstructor
+@Getter
+@Setter
 public class Film {
-    private Long id;
+    @JsonIgnore
+    final private Set<Integer> likes = new HashSet<>();
+    private int id;
     @NotBlank
     private String name;
+    @NotBlank
     private String description;
     @NotNull
     private LocalDate releaseDate;
     @Positive
-    private Integer duration;
-    private Set<Long> likes = new HashSet<>();
+    private int duration;
+    private Set<Genre> genres = new HashSet<>();
     @NotNull
     private MpaRating mpa;
-    private Set<Genre> genres = new HashSet<>();
 
-    public Film(Long id, String name, String description, LocalDate releaseDate, Integer duration, Set<Long> likes, MpaRating mpa, Set<Genre> genres) {
-        this.id = id;
-        this.name = name;
-        this.description = description;
-        this.releaseDate = releaseDate;
-        this.duration = duration;
-        this.likes = likes;
-        this.mpa = mpa;
-        this.genres = genres;
+    public void addLike(Integer id) {
+        likes.add(id);
     }
 
-    public Map<String, Object> toMap() {
-        Map<String, Object> values = new HashMap<>();
-        values.put("name", name);
-        values.put("description", description);
-        values.put("release_Date", releaseDate);
-        values.put("duration", duration);
-        values.put("rating_id", mpa.getId());
-        return values;
+    public void deleteLike(Integer id) {
+        likes.remove(id);
+    }
+
+    public void addGenre(Genre genre) {
+        genres.add(genre);
+    }
+
+    public void removeAllGenres() {
+        genres.clear();
+    }
+
+    public void removeGenre(Genre genre) {
+        genres.remove(genre);
     }
 }

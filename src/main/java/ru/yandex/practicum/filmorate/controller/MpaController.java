@@ -1,7 +1,6 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -9,29 +8,27 @@ import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.practicum.filmorate.model.MpaRating;
 import ru.yandex.practicum.filmorate.service.MpaService;
 
-import java.util.Collection;
+import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/mpa")
-@Slf4j
 public class MpaController {
+    private final MpaService mpaService;
 
-    private MpaService mpaService;
-
-    @Autowired
     public MpaController(MpaService mpaService) {
         this.mpaService = mpaService;
     }
 
     @GetMapping
-    public Collection<MpaRating> getAllMpa() {
-        log.info("Получен GET-запрос к эндпоинту: '/mpa' на получение всех рейтингов");
-        return mpaService.getAllMpa();
+    public List<MpaRating> getRatingsMpa() {
+        log.info("Запрос на все MPA");
+        return mpaService.getRatingsMpa();
     }
 
     @GetMapping("/{id}")
-    public MpaRating getMpaById(@PathVariable Integer id) {
-        log.info("Получен GET-запрос к эндпоинту: '/mpa' на получение рейтинга с ID={}", id);
-        return mpaService.getMpaById(id);
+    public MpaRating getRatingMpaById(@PathVariable Integer id) {
+        log.info("Запрос на получение MPA c id {}", id);
+        return mpaService.getRatingMpaById(id);
     }
 }

@@ -1,41 +1,29 @@
 package ru.yandex.practicum.filmorate.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.expectation.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.List;
 
 @Service
 public class GenreService {
+    private final GenreStorage genreDbStorage;
 
-    private GenreStorage genreStorage;
-
-    @Autowired
-    public GenreService(GenreStorage genreStorage) {
-        this.genreStorage = genreStorage;
+    public GenreService(GenreStorage genreDbStorage) {
+        this.genreDbStorage = genreDbStorage;
     }
 
-    public Collection<Genre> getGenres() {
-        return genreStorage.getGenres().stream().sorted(Comparator.comparing(Genre::getId)).collect(Collectors.toList());
+    public Genre getGenreById(int id) {
+        Genre genre = genreDbStorage.getGenreById(id);
+        if (genre == null) {
+            throw new NotFoundException("Genre not found");
+        }
+        return genre;
     }
 
-    public Genre getGenreById(Integer id) {
-        return genreStorage.getGenreById(id);
-    }
-
-    public void putGenres(Film film) {
-        genreStorage.delete(film);
-        genreStorage.add(film);
-    }
-
-    public Set<Genre> getFilmGenres(Long filmId) {
-        return new HashSet<>(genreStorage.getFilmGenres(filmId));
+    public List<Genre> getAllGenres() {
+        return genreDbStorage.getAllGenres();
     }
 }

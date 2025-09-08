@@ -1,86 +1,139 @@
 package ru.yandex.practicum.filmorate.model;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import ru.yandex.practicum.filmorate.controller.UserController;
-import ru.yandex.practicum.filmorate.expectation.ValidationException;
-import ru.yandex.practicum.filmorate.service.UserService;
-import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDate;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
-@SpringBootTest
-public class UserControllerTest {
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+class UserControllerTest {
 
-    private User user;
-    private UserController userController;
-    private UserStorage userStorage;
+    @Autowired
+    private TestRestTemplate restTemplate;
 
-    @BeforeEach
-    public void beforeEach() {
-        userStorage = new InMemoryUserStorage();
-        userController = new UserController(userStorage, new UserService(userStorage, null));
-        user = User.builder().name("MyName").login("MaxPower").email("1@ya.ru").birthday(LocalDate.of(1980, 12, 23)).build();
+    @Test
+    void createUserWithBadEmail_shouldShowErrorMessage() {
+        User user = User.builder()
+                .email("invalid-email")
+                .login("petya_petrov")
+                .name("Петр Петров")
+                .birthday(LocalDate.of(1985, 5, 15))
+                .build();
+
+        ResponseEntity<User> response = restTemplate.postForEntity("/users", user, User.class);
+        assertEquals(BAD_REQUEST, response.getStatusCode());
     }
 
-    // проверка контроллера при корректных атрибутах пользователя
     @Test
-    public void shouldAddUserWhenAllAttributeCorrect() {
-        User user1 = userController.create(user);
-        assertEquals(user, user1, "Переданный и полученный пользователь должны совпадать");
-        assertEquals(1, userController.getUsers().size(), "В списке должен быть один пользователь");
+    void createUserWithEmptyLogin_shouldShowErrorMessage() {
+        User user = User.builder()
+                .email("valid@example.com")
+                .login(" ")
+                .name("Анна Смирнова")
+                .birthday(LocalDate.of(1990, 8, 22))
+                .build();
+
+        ResponseEntity<User> response = restTemplate.postForEntity("/users", user, User.class);
+        assertEquals(BAD_REQUEST, response.getStatusCode());
     }
 
-    // проверка контроллера при "пустой" электронной почте пользователя
     @Test
-    public void shouldNoAddUserWhenUserEmailIsEmpty() {
-        user.setEmail("");
-        assertThrows(ValidationException.class, () -> userController.create(user));
-        assertEquals(0, userController.getUsers().size(), "Список пользователей должен быть пустым");
+    void createUserWithNullLogin_shouldShowErrorMessage() {
+        User user = User.builder()
+                .email("valid2@example.com")
+                .login(null)
+                .name("Иван Иванов")
+                .birthday(LocalDate.of(1975, 3, 10))
+                .build();
+
+        ResponseEntity<User> response = restTemplate.postForEntity("/users", user, User.class);
+        assertEquals(BAD_REQUEST, response.getStatusCode());
     }
 
-    // проверка контроллера, когда электронная почта не содержит символа @
     @Test
-    public void shouldNoAddUserWhenUserEmailIsNotContainsCommercialAt() {
-        user.setEmail("notemail.ru");
-        assertThrows(ValidationException.class, () -> userController.create(user));
-        assertEquals(0, userController.getUsers().size(), "Список пользователей должен быть пустым");
+    void createFutureBirthUser_shouldShowErrorMessage() {
+        User user = User.builder()
+                .email("future.kid@example.com")
+                .login("baby_future")
+                .name("Малыш Будущий")
+                .birthday(LocalDate.now().plusDays(1))
+                .build();
+
+        ResponseEntity<User> response = restTemplate.postForEntity("/users", user, User.class);
+        assertEquals(BAD_REQUEST, response.getStatusCode());
     }
 
-    // проверка контроллера, когда у пользователя пустой логин
     @Test
-    public void shouldNoAddUserWhenUserLoginIsEmpty() {
-        user.setLogin("");
-        assertThrows(ValidationException.class, () -> userController.create(user));
-        assertEquals(0, userController.getUsers().size(), "Список пользователей должен быть пустым");
+    void updateUserToEmptyEmail_shouldShowErrorMessage() {
+        // Сначала создаём пользователя
+        User usr = User.builder()
+                .email("sasha@yandex.ru")
+                .login("sashajaaa")
+                .name("Александр")
+                .birthday(LocalDate.of(1988, 1, 15))
+                .build();
+        ResponseEntity<User> createResponse = restTemplate.postForEntity("/users", usr, User.class);
+        User createdUser = createResponse.getBody();
+
+        // Пытаемся обновить на пустой email
+        User user2 = createdUser.toBuilder()
+                .email("")
+                .build();
+
+        HttpEntity<User> entity = new HttpEntity<>(user2);
+        ResponseEntity<User> response2 = restTemplate.exchange("/users", HttpMethod.PUT, entity, User.class);
+        assertEquals(BAD_REQUEST, response2.getStatusCode());
     }
 
-    // проверка контроллера, когда логин пользователя содержит пробелы
     @Test
-    public void shouldNoAddUserWhenUserLoginIsContainsSpaces() {
-        user.setLogin("Max Power");
-        assertThrows(ValidationException.class, () -> userController.create(user));
-        assertEquals(0, userController.getUsers().size(), "Список пользователей должен быть пустым");
+    void updateUserToEmptyLogin_shouldShowErrorMessage() {
+        // Сначала создаём пользователя
+        User usr = User.builder()
+                .email("user@yandex.ru")
+                .login("user_login")
+                .name("Пользователь")
+                .birthday(LocalDate.of(1995, 6, 20))
+                .build();
+        ResponseEntity<User> createResponse = restTemplate.postForEntity("/users", usr, User.class);
+        User createdUser = createResponse.getBody();
+
+        // Пытаемся обновить на пустой login
+        User user = createdUser.toBuilder()
+                .login(" ")
+                .build();
+
+        HttpEntity<User> entity = new HttpEntity<>(user);
+        ResponseEntity<User> response2 = restTemplate.exchange("/users", HttpMethod.PUT, entity, User.class);
+        assertEquals(BAD_REQUEST, response2.getStatusCode());
     }
 
-    // проверка контроллера, когда имя пользователя пустое
     @Test
-    public void shouldAddUserWhenUserNameIsEmpty() {
-        user.setName("");
-        User user1 = userController.create(user);
-        assertTrue(user1.getName().equals(user.getLogin()), "Имя и логин пользователя должны совпадать");
-        assertEquals(1, userController.getUsers().size(), "В списке должен быть один пользователь");
-    }
+    void updateFutureBirthUser_shouldShowErrorMessage() {
+        // Сначала создаём пользователя
+        User usr = User.builder()
+                .email("user@yandex.ru")
+                .login("user_login")
+                .name("Пользователь")
+                .birthday(LocalDate.of(1995, 6, 20))
+                .build();
+        ResponseEntity<User> createResponse = restTemplate.postForEntity("/users", usr, User.class);
+        User createdUser = createResponse.getBody();
 
-    // проверка контроллера, когда дата рождения пользователя в будущем
-    @Test
-    public void shouldAddUserWhenUserBirthdayInFuture() {
-        user.setBirthday(LocalDate.now().plusDays(1));
-        assertThrows(ValidationException.class, () -> userController.create(user));
-        assertEquals(0, userController.getUsers().size(), "Список пользователей должен быть пустым");
+        // Пытаемся обновить на дату рождения в будущем
+        User user = createdUser.toBuilder()
+                .birthday(LocalDate.now().plusDays(1))
+                .build();
+
+        HttpEntity<User> entity = new HttpEntity<>(user);
+        ResponseEntity<User> response2 = restTemplate.exchange("/users", HttpMethod.PUT, entity, User.class);
+        assertEquals(BAD_REQUEST, response2.getStatusCode());
     }
 }

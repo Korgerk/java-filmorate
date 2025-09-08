@@ -1,13 +1,21 @@
 package ru.yandex.practicum.filmorate.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
+import lombok.*;
+import org.springframework.stereotype.Service;
 
-@Data
-@AllArgsConstructor
+@Service
+@Getter
+@Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class MpaRating {
-    private Integer id;
-    private String name;
+
+    @Positive
+    protected int id;
+
+    @NotBlank
+    protected String name;
 }

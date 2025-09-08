@@ -1,29 +1,31 @@
 package ru.yandex.practicum.filmorate.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.model.MpaRating;
-import ru.yandex.practicum.filmorate.storage.mpa.MpaStorage;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.stream.Collectors;
+import ru.yandex.practicum.filmorate.expectation.NotFoundException;
+import ru.yandex.practicum.filmorate.model.MpaRating;
+import ru.yandex.practicum.filmorate.storage.mpa.RatingMpaDbStorage;
+
+
+import java.util.List;
 
 @Service
 public class MpaService {
+    private final RatingMpaDbStorage ratingMpaDbStorage;
 
-    private MpaStorage mpaStorage;
-
-    @Autowired
-    public MpaService(MpaStorage mpaStorage) {
-        this.mpaStorage = mpaStorage;
+    public MpaService(RatingMpaDbStorage ratingMpaDbStorage) {
+        this.ratingMpaDbStorage = ratingMpaDbStorage;
     }
 
-    public Collection<MpaRating> getAllMpa() {
-        return mpaStorage.getAllMpa().stream().sorted(Comparator.comparing(MpaRating::getId)).collect(Collectors.toList());
+    public MpaRating getRatingMpaById(int id) {
+        MpaRating mpa = ratingMpaDbStorage.getRatingMpaById(id);
+        if (mpa == null) {
+            throw new NotFoundException("Rating not found");
+        }
+        return mpa;
     }
 
-    public MpaRating getMpaById(Integer id) {
-        return mpaStorage.getMpaById(id);
+    public List<MpaRating> getRatingsMpa() {
+        return ratingMpaDbStorage.getRatingsMpa();
     }
 }
