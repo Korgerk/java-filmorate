@@ -5,15 +5,11 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
-import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
-
 import ru.yandex.practicum.filmorate.expectation.FilmNotFoundException;
 import ru.yandex.practicum.filmorate.expectation.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
-
-import ru.yandex.practicum.filmorate.model.MpaRating;
 import ru.yandex.practicum.filmorate.service.GenreService;
 import ru.yandex.practicum.filmorate.service.MpaService;
 import ru.yandex.practicum.filmorate.storage.like.LikeStorage;
@@ -31,8 +27,7 @@ public class FilmDbStorage implements FilmStorage {
     private LikeStorage likeStorage;
 
     @Autowired
-    public FilmDbStorage(JdbcTemplate jdbcTemplate, MpaService mpaService, GenreService genreService,
-                         LikeStorage likeStorage) {
+    public FilmDbStorage(JdbcTemplate jdbcTemplate, MpaService mpaService, GenreService genreService, LikeStorage likeStorage) {
         this.jdbcTemplate = jdbcTemplate;
         this.mpaService = mpaService;
         this.genreService = genreService;
@@ -53,9 +48,7 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Film create(Film film) {
-        SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
-                .withTableName("films")
-                .usingGeneratedKeyColumns("id");
+        SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate).withTableName("films").usingGeneratedKeyColumns("id");
         film.setId(simpleJdbcInsert.executeAndReturnKey(film.toMap()).longValue());
         film.setMpa(mpaService.getMpaById(film.getMpa().getId()));
         if (film.getGenres() != null) {
@@ -72,21 +65,11 @@ public class FilmDbStorage implements FilmStorage {
         if (film == null) {
             throw new ValidationException("Передан пустой аргумент!");
         }
-        String sqlQuery = "UPDATE films SET " +
-                          "name = ?, description = ?, release_date = ?, duration = ?, " +
-                          "rating_id = ? WHERE id = ?";
-        if (jdbcTemplate.update(sqlQuery,
-                film.getName(),
-                film.getDescription(),
-                film.getReleaseDate(),
-                film.getDuration(),
-                film.getMpa().getId(),
-                film.getId()) != 0) {
+        String sqlQuery = "UPDATE films SET " + "name = ?, description = ?, release_date = ?, duration = ?, " + "rating_id = ? WHERE id = ?";
+        if (jdbcTemplate.update(sqlQuery, film.getName(), film.getDescription(), film.getReleaseDate(), film.getDuration(), film.getMpa().getId(), film.getId()) != 0) {
             film.setMpa(mpaService.getMpaById(film.getMpa().getId()));
             if (film.getGenres() != null) {
-                Collection<Genre> sortGenres = film.getGenres().stream()
-                        .sorted(Comparator.comparing(Genre::getId))
-                        .collect(Collectors.toList());
+                Collection<Genre> sortGenres = film.getGenres().stream().sorted(Comparator.comparing(Genre::getId)).collect(Collectors.toList());
                 film.setGenres(new LinkedHashSet<>(sortGenres));
                 for (Genre genre : film.getGenres()) {
                     genre.setName(genreService.getGenreById(genre.getId()).getName());

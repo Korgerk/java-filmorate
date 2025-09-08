@@ -8,5 +8,3 @@ public class ValidationException extends IllegalArgumentException {
         log.error(message);
     }
 }
-
-

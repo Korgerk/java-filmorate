@@ -52,11 +52,11 @@ public class FriendStorage {
 
     public List<User> getFriends(Long userId) {
         String sql = """
-        SELECT u.id, u.email, u.login, u.name, u.birthday
-        FROM friends f
-        INNER JOIN users u ON f.friend_id = u.id
-        WHERE f.user_id = ?
-        """;
+                SELECT u.id, u.email, u.login, u.name, u.birthday
+                FROM friends f
+                INNER JOIN users u ON f.friend_id = u.id
+                WHERE f.user_id = ?
+                """;
         return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(User.class), userId);
     }
 }

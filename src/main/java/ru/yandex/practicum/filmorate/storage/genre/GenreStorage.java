@@ -51,8 +51,7 @@ public class GenreStorage {
     }
 
     public List<Genre> getFilmGenres(Long filmId) {
-        String sql = "SELECT genre_id AS id, name FROM film_genres " +
-                     "INNER JOIN genres ON genre_id = id WHERE film_id = ?";
+        String sql = "SELECT genre_id AS id, name FROM film_genres " + "INNER JOIN genres ON genre_id = id WHERE film_id = ?";
         return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(Genre.class), filmId);
     }
 }

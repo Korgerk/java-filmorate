@@ -8,7 +8,6 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.GenreService;
 import ru.yandex.practicum.filmorate.service.MpaService;
 
-
 import java.util.HashSet;
 import java.util.List;
 
@@ -37,12 +36,7 @@ public class LikeStorage {
     }
 
     public List<Film> getPopular(Integer count) {
-        String sql = "SELECT f.id, f.name, f.description, f.release_date, f.duration, f.rating_id " +
-                     "FROM films f " +
-                     "LEFT JOIN film_likes fl ON f.id = fl.film_id " +
-                     "GROUP BY f.id " +
-                     "ORDER BY COUNT(fl.user_id) DESC " +
-                     "LIMIT ?";
+        String sql = "SELECT f.id, f.name, f.description, f.release_date, f.duration, f.rating_id " + "FROM films f " + "LEFT JOIN film_likes fl ON f.id = fl.film_id " + "GROUP BY f.id " + "ORDER BY COUNT(fl.user_id) DESC " + "LIMIT ?";
 
         List<Film> films = jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(Film.class), count);
         for (Film film : films) {
