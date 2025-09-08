@@ -16,6 +16,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ContextConfiguration(classes = {UserDbStorage.class})
 class UserDbStorageTest {
 
+    public static User createTestUser(String email, String login, String name, LocalDate birthday) {
+        return User.builder()
+                .email(email)
+                .login(login)
+                .name(name)
+                .birthday(birthday)
+                .build();
+    }
+
     @Autowired
     private UserStorage userStorage;
 

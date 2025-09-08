@@ -3,163 +3,139 @@ package ru.yandex.practicum.filmorate.model;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.jdbc.Sql;
-import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.ContextConfiguration;
+import ru.yandex.practicum.filmorate.storage.film.TestConfig;
 import ru.yandex.practicum.filmorate.storage.film.impl.FilmDbStorage;
+import ru.yandex.practicum.filmorate.storage.genre.impl.GenreDbStorage;
 import ru.yandex.practicum.filmorate.storage.mpa.impl.MpaDbStorage;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
+import ru.yandex.practicum.filmorate.storage.user.impl.UserDbStorage;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @JdbcTest
-@Sql(scripts = "/data.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-@TestPropertySource(properties = "spring.sql.init.mode=never")
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@ContextConfiguration(classes = {FilmDbStorage.class, UserDbStorage.class, MpaDbStorage.class, GenreDbStorage.class, TestConfig.class})
+@Import(TestConfig.class)
 class FilmDbStorageTest {
 
     @Autowired
-    private FilmStorage filmStorage;
+    private FilmDbStorage filmStorage;
 
     @Autowired
-    private UserStorage userStorage;
+    private UserDbStorage userStorage;
 
     @Autowired
-    private MpaDbStorage mpaStorage;
+    private JdbcTemplate jdbcTemplate;
 
-    @Autowired
-    private FilmDbStorage filmDbStorage; // Только для внутренних проверок, если нужно
-
-    private User createUser(String email, String login) {
-        User user = User.builder()
-                .email(email)
-                .login(login)
-                .birthday(LocalDate.of(1990, 1, 1))
-                .build();
-        return userStorage.create(user);
-    }
+    private Film testFilm;
+    private MpaRating mpa;
+    private Set<Genre> genres;
 
     @BeforeEach
     void setUp() {
-        assertThat(mpaStorage.getById(1)).as("MPA должен существовать").isNotNull();
+        // Создаём MPA и жанры (должны быть в data.sql)
+        mpa = new MpaRating(1, "G");
+        genres = Set.of(new Genre(1, "Комедия"));
+
+        testFilm = Film.builder().name("Test Film").description("A test film").releaseDate(LocalDate.of(2020, 1, 1)).duration(120).mpa(mpa).genres(genres).build();
     }
 
     @Test
     void shouldCreateFilm() {
-        // Создаем фильм
-        MpaRating mpa = mpaStorage.getById(1);
-        Film film = Film.builder()
-                .name("Новый фильм")
-                .description("Описание")
-                .releaseDate(LocalDate.of(2000, 1, 1))
-                .duration(120)
-                .mpa(mpa)
-                .build();
-
-        Film created = filmStorage.create(film);
-
+        Film created = filmStorage.create(testFilm);
         assertThat(created.getId()).isPositive();
-        assertThat(filmStorage.getById(created.getId()))
-                .usingRecursiveComparison()
-                .ignoringExpectedNullFields()
-                .isEqualTo(created);
+        assertThat(created.getName()).isEqualTo("Test Film");
+    }
+
+    @Test
+    void shouldGetFilmById() {
+        Film created = filmStorage.create(testFilm);
+        Film found = filmStorage.getById(created.getId());
+        assertThat(found).isNotNull();
+        assertThat(found.getName()).isEqualTo("Test Film");
+        assertThat(found.getGenres()).extracting("id").containsExactly(1);
     }
 
     @Test
     void shouldUpdateFilm() {
-        // Создаем фильм
-        MpaRating mpa = mpaStorage.getById(1);
-        Film film = filmStorage.create(Film.builder()
-                .name("Старое имя")
-                .description("Описание")
-                .releaseDate(LocalDate.of(2000, 1, 1))
-                .duration(100)
-                .mpa(mpa)
-                .build());
+        Film created = filmStorage.create(testFilm);
+        created.setName("Updated Name");
+        filmStorage.update(created);
 
-        // Обновляем
-        film.setName("Обновлённое имя");
-        film.setDescription("Новое описание");
-        film.setDuration(150);
-
-        Film updated = filmStorage.update(film);
-
-        assertThat(updated.getName()).isEqualTo("Обновлённое имя");
-        assertThat(updated.getDescription()).isEqualTo("Новое описание");
-        assertThat(updated.getDuration()).isEqualTo(150);
-    }
-
-    @Test
-    void shouldAddLike() {
-        User user1 = createUser("u1@example.com", "u1");
-        User user2 = createUser("u2@example.com", "u2");
-
-        MpaRating mpa = mpaStorage.getById(1);
-        Film film = filmStorage.create(Film.builder()
-                .name("Фильм с лайками")
-                .description("Описание")
-                .releaseDate(LocalDate.of(2000, 1, 1))
-                .duration(100)
-                .mpa(mpa)
-                .build());
-
-        filmStorage.addLike(film.getId(), user1.getId());
-        filmStorage.addLike(film.getId(), user2.getId());
-
-        List<Film> popular = filmStorage.getPopular(10);
-
-        assertThat(popular)
-                .hasSize(1)
-                .first()
-                .extracting(Film::getId)
-                .isEqualTo(film.getId());
-    }
-
-    @Test
-    void shouldRemoveLike() {
-        User user = createUser("u1@example.com", "u1");
-
-        MpaRating mpa = mpaStorage.getById(1);
-        Film film = filmStorage.create(Film.builder()
-                .name("Фильм без лайков")
-                .description("Описание")
-                .releaseDate(LocalDate.of(2000, 1, 1))
-                .duration(100)
-                .mpa(mpa)
-                .build());
-
-        filmStorage.addLike(film.getId(), user.getId());
-        filmStorage.removeLike(film.getId(), user.getId());
-
-        List<Film> popular = filmStorage.getPopular(10);
-        assertThat(popular).doesNotContain(film);
+        Film updated = filmStorage.getById(created.getId());
+        assertThat(updated.getName()).isEqualTo("Updated Name");
     }
 
     @Test
     void shouldGetAllFilms() {
-        MpaRating mpa = mpaStorage.getById(1);
+        filmStorage.create(testFilm);
+        List<Film> films = filmStorage.getAll();
+        assertThat(films).hasSize(1);
+        assertThat(films.get(0).getName()).isEqualTo("Test Film");
+    }
 
-        filmStorage.create(Film.builder()
-                .name("Фильм 1")
-                .description("Описание 1")
-                .releaseDate(LocalDate.of(2000, 1, 1))
-                .duration(100)
-                .mpa(mpa)
-                .build());
+    @Test
+    void shouldAddLikeAndGetPopular() {
+        // Создаём пользователя
+        var user = userStorage.create(UserDbStorageTest.createTestUser("likeuser@example.com", "likeuser", "Like User", LocalDate.of(1990, 1, 1)));
 
-        filmStorage.create(Film.builder()
-                .name("Фильм 2")
-                .description("Описание 2")
-                .releaseDate(LocalDate.of(2001, 1, 1))
-                .duration(120)
-                .mpa(mpa)
-                .build());
+        // Создаём фильм
+        Film film = filmStorage.create(testFilm);
 
-        List<Film> all = filmStorage.getAll();
+        // Добавляем лайк
+        filmStorage.addLike(film.getId(), user.getId());
 
-        assertThat(all).hasSize(2);
+        // Проверяем, что фильм в топе
+        List<Film> popular = filmStorage.getPopular(10);
+        assertThat(popular).hasSize(1);
+        assertThat(popular.get(0).getId()).isEqualTo(film.getId());
+    }
+
+    @Test
+    void shouldRemoveLike() {
+        var user = userStorage.create(UserDbStorageTest.createTestUser("unlike@example.com", "unlike", "Un Like", LocalDate.of(1990, 1, 1)));
+        Film film = filmStorage.create(testFilm);
+        filmStorage.addLike(film.getId(), user.getId());
+
+        // Проверяем, что лайк есть
+        assertThat(getLikeCount(film.getId())).isEqualTo(1);
+
+        // Удаляем
+        filmStorage.removeLike(film.getId(), user.getId());
+
+        // Проверяем, что лайк ушёл
+        assertThat(getLikeCount(film.getId())).isEqualTo(0);
+    }
+
+    @Test
+    void shouldGetPopularFilmsSortedByLikes() {
+        var user1 = userStorage.create(UserDbStorageTest.createTestUser("u1@example.com", "u1", "U1", LocalDate.of(1990, 1, 1)));
+        var user2 = userStorage.create(UserDbStorageTest.createTestUser("u2@example.com", "u2", "U2", LocalDate.of(1990, 1, 1)));
+
+        Film film1 = filmStorage.create(Film.builder().name("Film 1").description("One like").releaseDate(LocalDate.now()).duration(90).mpa(mpa).build());
+
+        Film film2 = filmStorage.create(Film.builder().name("Film 2").description("Two likes").releaseDate(LocalDate.now()).duration(90).mpa(mpa).build());
+
+        filmStorage.addLike(film1.getId(), user1.getId());
+        filmStorage.addLike(film2.getId(), user1.getId());
+        filmStorage.addLike(film2.getId(), user2.getId());
+
+        List<Film> popular = filmStorage.getPopular(10);
+        assertThat(popular).hasSize(2);
+        assertThat(popular.get(0).getId()).isEqualTo(film2.getId()); // Больше лайков
+        assertThat(popular.get(1).getId()).isEqualTo(film1.getId());
+    }
+
+    private int getLikeCount(int filmId) {
+        String sql = "SELECT COUNT(*) FROM film_likes WHERE film_id = ?";
+        return jdbcTemplate.queryForObject(sql, Integer.class, filmId);
     }
 }

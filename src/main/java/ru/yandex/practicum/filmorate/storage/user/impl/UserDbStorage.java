@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.storage.user.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
@@ -16,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Repository
+@Qualifier("dbUserStorage")
 public class UserDbStorage implements UserStorage {
 
     private final JdbcTemplate jdbcTemplate;
