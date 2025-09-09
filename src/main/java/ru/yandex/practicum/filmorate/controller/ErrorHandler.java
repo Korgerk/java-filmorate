@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.yandex.practicum.filmorate.expectation.NotFoundException;
 import ru.yandex.practicum.filmorate.expectation.ValidationException;
 
-
 @Slf4j
 @RestControllerAdvice
 public class ErrorHandler {

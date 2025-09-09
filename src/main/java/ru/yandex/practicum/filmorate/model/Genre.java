@@ -1,21 +1,16 @@
 package ru.yandex.practicum.filmorate.model;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Positive;
 import lombok.*;
-import org.springframework.stereotype.Service;
 
 @Builder(toBuilder = true)
-@Service
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode
 public class Genre {
 
-    @Positive
-    protected int id;
+    private int id;
 
-    @NotBlank
-    protected String name;
+    private String name;
 }

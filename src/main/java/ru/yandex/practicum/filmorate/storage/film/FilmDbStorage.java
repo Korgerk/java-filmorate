@@ -65,19 +65,19 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Film getById(Integer filmId) {
-        String sqlQuery = "SELECT f.*, rm.rating_name " + "FROM films f " + "JOIN rating_mpa rm ON f.rating_id = rm.rating_id " + "WHERE f.film_id = ?";
+        String sqlQuery = "SELECT f.*, rm.rating_name " +
+                          "FROM films f " +
+                          "JOIN rating_mpa rm ON f.rating_id = rm.rating_id " +
+                          "WHERE f.film_id = ?";
 
         try {
             Film film = jdbcTemplate.queryForObject(sqlQuery, this::makeFilm, filmId);
-            if (film != null) {
-                // Загружаем жанры
-                film.setGenres(new HashSet<>(getGenres(filmId)));
-                return film;
-            }
+            // Убери if (film != null) — он избыточен
+            film.setGenres(new HashSet<>(getGenres(filmId)));
+            return film;
         } catch (EmptyResultDataAccessException e) {
-            // ignored
+            throw new NotFoundException("Movie with ID = " + filmId + " not found");
         }
-        throw new NotFoundException("Movie with ID = " + filmId + " not found");
     }
 
     public void addGenre(int filmId, Set<Genre> genres) {
@@ -147,12 +147,6 @@ public class FilmDbStorage implements FilmStorage {
         }, filmsTable.keySet().toArray());
 
         return films;
-    }
-
-    private Genre makeGenre(ResultSet rs, int id) throws SQLException {
-        int genreId = rs.getInt("genre_id");
-        String genreName = rs.getString("genre_name");
-        return new Genre(genreId, genreName);
     }
 
     private Film makeFilm(ResultSet rs, int rowNum) throws SQLException {

@@ -53,11 +53,6 @@ public class FilmService {
     public Film update(Film film) {
         validate(film, "Movie update form is filled in incorrectly");
 
-        Film existingFilm = filmStorage.getById(film.getId());
-        if (existingFilm == null) {
-            throw new NotFoundException("Movie with ID = " + film.getId() + " not found");
-        }
-
         Film result = filmStorage.update(film);
         log.info("Movie successfully updated: {}", film);
         return result;
