@@ -117,16 +117,19 @@ public class FilmDbStorage implements FilmStorage {
         try {
             String sqlQuery = "SELECT f.*, rm.rating_name " + "FROM films f " + "JOIN rating_mpa rm ON f.rating_id = rm.rating_id " + "WHERE f.film_id = ?";
 
-            SqlRowSet srs = jdbcTemplate.queryForRowSet(sqlQuery, filmId);
+            List<Film> films = jdbcTemplate.query(sqlQuery, this::makeFilm, filmId);
 
-            if (srs.next()) {
-                Film film = filmMap(srs);
-                log.debug("Found film: {}", film);
-                return film;
-            } else {
+            if (films.isEmpty()) {
                 log.warn("Film with ID = {} not found", filmId);
                 throw new NotFoundException("Movie with ID = " + filmId + " not found");
             }
+
+            Film film = films.get(0);
+            Set<Genre> genres = getGenres(filmId);
+            film.setGenres(genres);
+
+            log.debug("Found film: {}", film);
+            return film;
         } catch (Exception e) {
             log.error("Error getting film by ID: {}", filmId, e);
             throw new RuntimeException("Failed to get film", e);
@@ -277,7 +280,10 @@ public class FilmDbStorage implements FilmStorage {
             java.sql.Date releaseDateSql = rs.getDate("release_date");
             LocalDate releaseDate = releaseDateSql != null ? releaseDateSql.toLocalDate() : null;
 
-            return Film.builder().id(rs.getInt("film_id")).name(rs.getString("film_name")).description(rs.getString("description")).duration(rs.getInt("duration")).releaseDate(releaseDate).mpa(mpa).genres(new HashSet<>()).build();
+            Film film = Film.builder().id(rs.getInt("film_id")).name(rs.getString("film_name")).description(rs.getString("description")).duration(rs.getInt("duration")).releaseDate(releaseDate).mpa(mpa).genres(new HashSet<>())
+                    .build();
+
+            return film;
         } catch (SQLException e) {
             log.error("Error creating Film from ResultSet", e);
             throw e;

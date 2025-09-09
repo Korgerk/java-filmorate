@@ -7,17 +7,21 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import ru.yandex.practicum.filmorate.expectation.NotFoundException;
 import ru.yandex.practicum.filmorate.expectation.ValidationException;
 
 import java.sql.SQLException;
+import java.util.List;
 
 
 @Slf4j
 @RestControllerAdvice
+@ControllerAdvice
 public class ErrorHandler {
 
     @ExceptionHandler
@@ -30,8 +34,8 @@ public class ErrorHandler {
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
-        log.error("400 BAD_REQUEST", e);
-        return new ErrorResponse(e.getMessage());
+        List<String> errors = e.getBindingResult().getFieldErrors().stream().map(f -> f.getField() + ": " + f.getDefaultMessage()).toList();
+        return new ErrorResponse(String.join(", ", errors));
     }
 
     @ExceptionHandler
@@ -79,6 +83,13 @@ public class ErrorHandler {
     public ErrorResponse handleSQLException(SQLException e) {
         log.error("Database error: {}", e.getMessage());
         return new ErrorResponse("Database error: " + e.getMessage());
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException e) {
+        log.error("400 BAD_REQUEST - Invalid argument type", e);
+        return new ErrorResponse("Invalid parameter: " + e.getName());
     }
 
     @ExceptionHandler

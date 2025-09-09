@@ -24,6 +24,9 @@ public class FilmController {
 
     @PostMapping
     public Film create(@Valid @RequestBody Film film) {
+        if (film.getMpa() == null) {
+            throw new ValidationException("MPA rating is required");
+        }
 
         if (film.getGenres() != null) {
             Set<Integer> genreIds = film.getGenres().stream().map(Genre::getId).collect(Collectors.toSet());

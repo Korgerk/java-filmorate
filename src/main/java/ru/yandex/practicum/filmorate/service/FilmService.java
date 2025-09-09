@@ -50,6 +50,8 @@ public class FilmService {
             if (mpaCount == null || mpaCount == 0) {
                 throw new NotFoundException("MPA rating with ID = " + film.getMpa().getId() + " not found");
             }
+        } else {
+            throw new ValidationException("MPA rating is required");
         }
 
         if (film.getGenres() != null && !film.getGenres().isEmpty()) {
@@ -87,11 +89,11 @@ public class FilmService {
 
     public void addLike(Integer filmId, Integer userId) {
         Film film = filmStorage.getById(filmId);
-        User user = userStorage.getById(userId);
-
         if (film == null) {
             throw new NotFoundException("Movie with ID = " + filmId + " not found");
         }
+
+        User user = userStorage.getById(userId);
         if (user == null) {
             throw new NotFoundException("User with ID = " + userId + " not found");
         }
