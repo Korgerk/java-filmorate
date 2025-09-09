@@ -21,8 +21,7 @@ class FilmControllerTest {
     private TestRestTemplate restTemplate;
 
     private MpaRating getDefaultMpa() {
-        return MpaRating.builder().id(1)
-                .name("G").build();
+        return MpaRating.builder().id(1).name("G").build();
     }
 
     @Test
