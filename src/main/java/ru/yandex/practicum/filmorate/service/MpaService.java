@@ -2,7 +2,7 @@ package ru.yandex.practicum.filmorate.service;
 
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.expectation.NotFoundException;
-import ru.yandex.practicum.filmorate.model.MpaRating;
+import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.storage.mpa.RatingMpaDbStorage;
 
 import java.util.List;
@@ -15,15 +15,15 @@ public class MpaService {
         this.ratingMpaDbStorage = ratingMpaDbStorage;
     }
 
-    public MpaRating getRatingMpaById(int id) {
-        MpaRating mpa = ratingMpaDbStorage.getRatingMpaById(id);
+    public Mpa getRatingMpaById(int id) {
+        Mpa mpa = ratingMpaDbStorage.getRatingMpaById(id);
         if (mpa == null) {
             throw new NotFoundException("Rating not found");
         }
         return mpa;
     }
 
-    public List<MpaRating> getRatingsMpa() {
+    public List<Mpa> getRatingsMpa() {
         return ratingMpaDbStorage.getRatingsMpa();
     }
 }

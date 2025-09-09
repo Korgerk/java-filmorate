@@ -20,13 +20,13 @@ class FilmControllerTest {
     @Autowired
     private TestRestTemplate restTemplate;
 
-    private MpaRating getDefaultMpa() {
-        return MpaRating.builder().id(1).name("G").build();
+    private Mpa getDefaultMpa() {
+        return Mpa.builder().id(1).name("G").build();
     }
 
     @Test
     void createFilmWithEmptyName_shouldReturnBadRequest() {
-        MpaRating mpa = getDefaultMpa();
+        Mpa mpa = getDefaultMpa();
 
         Film film = Film.builder().name("").description("Научно-фантастический боевик о будущем.").releaseDate(LocalDate.of(2023, 1, 1)).duration(150).mpa(mpa).build();
 
@@ -36,7 +36,7 @@ class FilmControllerTest {
 
     @Test
     void createFilmWithNullName_shouldReturnBadRequest() {
-        MpaRating mpa = getDefaultMpa();
+        Mpa mpa = getDefaultMpa();
 
         Film film = Film.builder().name(null).description("Фэнтези о путешествии через порталы.").releaseDate(LocalDate.of(2001, 12, 19)).duration(178).mpa(mpa).build();
 
@@ -46,7 +46,7 @@ class FilmControllerTest {
 
     @Test
     void createFilmWithMinusDuration_shouldReturnBadRequest() {
-        MpaRating mpa = getDefaultMpa();
+        Mpa mpa = getDefaultMpa();
 
         Film film = Film.builder().name("Тестовый фильм").description("Фильм с негативной продолжительностью — ошибка.").releaseDate(LocalDate.of(2020, 6, 15)).duration(-100).mpa(mpa).build();
 
@@ -56,7 +56,7 @@ class FilmControllerTest {
 
     @Test
     void createFilmWithReleaseDateInFuture_shouldReturnBadRequest() {
-        MpaRating mpa = getDefaultMpa();
+        Mpa mpa = getDefaultMpa();
 
         Film film = Film.builder().name("Фильм будущего").description("Этот фильм ещё не снят.").releaseDate(LocalDate.now().plusDays(1)).duration(120).mpa(mpa).build();
 
@@ -66,7 +66,7 @@ class FilmControllerTest {
 
     @Test
     void updateFilmWithEmptyName_shouldReturnBadRequest() {
-        MpaRating mpa = getDefaultMpa();
+        Mpa mpa = getDefaultMpa();
         Film filmToCreate = Film.builder().name("Оригинальное название").description("Изначальное описание фильма.").releaseDate(LocalDate.of(2022, 3, 22)).duration(120).mpa(mpa).build();
 
         ResponseEntity<Film> createResponse = restTemplate.postForEntity("/films", filmToCreate, Film.class);
@@ -83,7 +83,7 @@ class FilmControllerTest {
 
     @Test
     void updateFilmWithNullName_shouldReturnBadRequest() {
-        MpaRating mpa = getDefaultMpa();
+        Mpa mpa = getDefaultMpa();
         Film filmToCreate = Film.builder().name("Старое название").description("Описание для обновления.").releaseDate(LocalDate.of(2021, 7, 4)).duration(110).mpa(mpa).build();
 
         ResponseEntity<Film> createResponse = restTemplate.postForEntity("/films", filmToCreate, Film.class);
@@ -100,7 +100,7 @@ class FilmControllerTest {
 
     @Test
     void updateFilmWithMinusDuration_shouldReturnBadRequest() {
-        MpaRating mpa = getDefaultMpa();
+        Mpa mpa = getDefaultMpa();
         Film filmToCreate = Film.builder().name("Длинный фильм").description("Фильм, который нужно обновить.").releaseDate(LocalDate.of(2019, 11, 11)).duration(180).mpa(mpa).build();
 
         ResponseEntity<Film> createResponse = restTemplate.postForEntity("/films", filmToCreate, Film.class);
