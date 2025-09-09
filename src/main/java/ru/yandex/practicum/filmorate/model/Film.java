@@ -1,55 +1,36 @@
 package ru.yandex.practicum.filmorate.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import jakarta.validation.constraints.Size;
+import lombok.*;
 
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 
 @Builder(toBuilder = true)
-@AllArgsConstructor
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Film {
-    @JsonIgnore
-    private final Set<Integer> likes = new HashSet<>();
     private int id;
-    @NotBlank
+
+    @NotBlank(message = "Name cannot be empty")
     private String name;
-    @NotBlank
+
+    @Size(max = 200, message = "Description cannot be longer than 200 characters")
     private String description;
-    @NotNull
+
     private LocalDate releaseDate;
-    @Positive
+
+    @Positive(message = "Duration must be positive")
     private int duration;
-    private Set<Genre> genres = new HashSet<>();
-    @NotNull
+
     private MpaRating mpa;
 
-    public void addLike(Integer id) {
-        likes.add(id);
-    }
+    private Set<Genre> genres = new HashSet<>();
 
-    public void deleteLike(Integer id) {
-        likes.remove(id);
-    }
-
-    public void addGenre(Genre genre) {
-        genres.add(genre);
-    }
-
-    public void removeAllGenres() {
-        genres.clear();
-    }
-
-    public void removeGenre(Genre genre) {
-        genres.remove(genre);
-    }
+    private Set<Integer> likes = new HashSet<>();
 }

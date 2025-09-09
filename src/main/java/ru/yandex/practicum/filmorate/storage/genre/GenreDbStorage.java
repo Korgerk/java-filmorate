@@ -1,11 +1,12 @@
 package ru.yandex.practicum.filmorate.storage.genre;
 
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.Genre;
 
-import java.util.ArrayList;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.List;
 
 @Repository
@@ -17,29 +18,28 @@ public class GenreDbStorage implements GenreStorage {
     }
 
     @Override
+    public Genre getGenreById(int genreId) {
+        String sqlQuery = "SELECT * FROM genres WHERE genre_id = ?";
+        try {
+            return jdbcTemplate.queryForObject(sqlQuery, this::mapRowToGenre, genreId);
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
+    }
+
+    @Override
+    public List<Genre> getAllGenres() {
+        String sqlQuery = "SELECT * FROM genres ORDER BY genre_id";
+        return jdbcTemplate.query(sqlQuery, this::mapRowToGenre);
+    }
+
+    @Override
     public void deleteAllGenresById(int filmId) {
         String sqlQuery = "DELETE FROM film_genres WHERE film_id = ?";
         jdbcTemplate.update(sqlQuery, filmId);
     }
 
-    @Override
-    public Genre getGenreById(int genreId) {
-        String sqlQuery = "SELECT * FROM genres WHERE genre_id = ?";
-        SqlRowSet srs = jdbcTemplate.queryForRowSet(sqlQuery, genreId);
-        if (srs.next()) {
-            return new Genre(genreId, srs.getString("genre_name"));
-        }
-        return null;
-    }
-
-    @Override
-    public List<Genre> getAllGenres() {
-        List<Genre> genres = new ArrayList<>();
-        String sqlQuery = "SELECT * FROM genres ORDER BY genre_id";
-        SqlRowSet srs = jdbcTemplate.queryForRowSet(sqlQuery);
-        while (srs.next()) {
-            genres.add(new Genre(srs.getInt("genre_id"), srs.getString("genre_name")));
-        }
-        return genres;
+    private Genre mapRowToGenre(ResultSet rs, int rowNum) throws SQLException {
+        return new Genre(rs.getInt("genre_id"), rs.getString("genre_name"));
     }
 }

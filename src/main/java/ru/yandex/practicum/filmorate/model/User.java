@@ -1,32 +1,36 @@
 package ru.yandex.practicum.filmorate.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import jakarta.validation.constraints.Pattern;
+import lombok.*;
 
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 
 @Builder(toBuilder = true)
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
 @AllArgsConstructor
 public class User {
-    @JsonIgnore
-    private final Set<Integer> friendIds = new HashSet<>();
     private int id;
-    @Email
-    @NotBlank
+
+    @NotBlank(message = "Email cannot be empty")
+    @Email(message = "Email should be valid")
     private String email;
-    @NotBlank
+
+    @NotBlank(message = "Login cannot be empty")
+    @Pattern(regexp = "\\S+", message = "Login cannot contain spaces")
     private String login;
+
     private String name;
-    @PastOrPresent
-    @NotNull
+
+    @PastOrPresent(message = "Birthday cannot be in the future")
     private LocalDate birthday;
+
+
+    private Set<Integer> friendIds = new HashSet<>();
 }

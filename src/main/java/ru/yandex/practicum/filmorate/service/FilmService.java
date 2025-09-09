@@ -9,7 +9,6 @@ import ru.yandex.practicum.filmorate.expectation.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MpaRating;
-import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 import ru.yandex.practicum.filmorate.storage.mpa.MpaStorage;
@@ -17,7 +16,10 @@ import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -29,72 +31,51 @@ public class FilmService {
     private final MpaStorage mpaStorage;
     private final GenreStorage genreStorage;
 
-
     @Autowired
-    public FilmService(FilmStorage filmStorage, UserStorage userStorage, MpaStorage mpaService, GenreStorage genreService) {
-        this.filmStorage = filmStorage;
+    public FilmService(FilmStorage filmStorage, UserStorage userStorage, MpaStorage mpaStorage, GenreStorage genreStorage) {
         this.userStorage = userStorage;
-        this.mpaStorage = mpaService;
-        this.genreStorage = genreService;
+        this.filmStorage = filmStorage;
+        this.mpaStorage = mpaStorage;
+        this.genreStorage = genreStorage;
     }
 
     public Collection<Film> getAll() {
-        log.info("List of all movies: " + filmStorage.getAll().size());
+        log.info("List of all movies: {}", filmStorage.getAll().size());
         return filmStorage.getAll();
     }
 
     public Film create(Film film) {
         validate(film, "Movie form is filled in incorrectly");
         Film result = filmStorage.create(film);
-        log.info("Movie successfully added: " + film);
+        log.info("Movie successfully added: {}", film);
         return getById(result.getId());
     }
 
     public Film update(Film film) {
         validate(film, "Movie update form is filled in incorrectly");
-
         Film result = filmStorage.update(film);
         log.info("Movie successfully updated: {}", film);
         return result;
     }
 
     public Film getById(Integer id) {
-        log.info("Requested user with ID = " + id);
+        log.info("Requested film with ID = {}", id);
         return filmStorage.getById(id);
     }
 
     public void addLike(Integer filmId, Integer userId) {
-        Film film = filmStorage.getById(filmId);
-        User user = userStorage.getById(userId);
-
-        if (film == null) {
-            throw new NotFoundException("Movie with ID = " + filmId + " not found");
-        }
-        if (user == null) {
-            throw new NotFoundException("User with ID = " + userId + " not found");
-        }
-
         filmStorage.addLike(filmId, userId);
         log.info("Like successfully added to film {} by user {}", filmId, userId);
     }
 
     public void removeLike(Integer filmId, Integer userId) {
-        Film film = filmStorage.getById(filmId);
-        if (film != null) {
-            if (userStorage.getById(userId) != null) {
-                filmStorage.removeLike(filmId, userId);
-                log.info("Like successfully removed");
-            } else {
-                throw new NotFoundException("User with ID = " + userId + " not found");
-            }
-        } else {
-            throw new NotFoundException("Movie with ID = " + filmId + " not found");
-        }
+        filmStorage.removeLike(filmId, userId);
+        log.info("Like successfully removed from film {} by user {}", filmId, userId);
     }
 
     public List<Film> getPopular(Integer count) {
-        List<Film> result = new ArrayList<>(filmStorage.getPopular(count));
-        log.info("Requested a list of popular movies");
+        List<Film> result = filmStorage.getPopular(count == null ? 10 : count);
+        log.info("Requested a list of popular movies (count: {})", count);
         return result;
     }
 

@@ -1,16 +1,16 @@
 package ru.yandex.practicum.filmorate.storage.mpa;
 
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.MpaRating;
 
-import java.util.ArrayList;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.List;
 
 @Repository
 public class RatingMpaDbStorage implements MpaStorage {
-
     private final JdbcTemplate jdbcTemplate;
 
     public RatingMpaDbStorage(JdbcTemplate jdbcTemplate) {
@@ -20,20 +20,20 @@ public class RatingMpaDbStorage implements MpaStorage {
     @Override
     public MpaRating getRatingMpaById(int ratingId) {
         String sqlQuery = "SELECT * FROM rating_mpa WHERE rating_id = ?";
-        SqlRowSet srs = jdbcTemplate.queryForRowSet(sqlQuery, ratingId);
-        if (srs.next()) {
-            return new MpaRating(ratingId, srs.getString("rating_name"));
+        try {
+            return jdbcTemplate.queryForObject(sqlQuery, this::mapRowToMpaRating, ratingId);
+        } catch (EmptyResultDataAccessException e) {
+            return null;
         }
-        return null;
     }
 
+    @Override
     public List<MpaRating> getRatingsMpa() {
-        List<MpaRating> ratingsMpa = new ArrayList<>();
-        String sqlQuery = "SELECT * FROM rating_mpa ORDER BY rating_id";
-        SqlRowSet srs = jdbcTemplate.queryForRowSet(sqlQuery);
-        while (srs.next()) {
-            ratingsMpa.add(new MpaRating(srs.getInt("rating_id"), srs.getString("rating_name")));
-        }
-        return ratingsMpa;
+        String sqlQuery = "SELECT * FROM rating_mpa";
+        return jdbcTemplate.query(sqlQuery, this::mapRowToMpaRating);
+    }
+
+    private MpaRating mapRowToMpaRating(ResultSet rs, int rowNum) throws SQLException {
+        return new MpaRating(rs.getInt("rating_id"), rs.getString("rating_name"));
     }
 }
