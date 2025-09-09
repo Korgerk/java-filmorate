@@ -7,15 +7,15 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.expectation.NotFoundException;
 import ru.yandex.practicum.filmorate.expectation.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.MpaRating;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -97,17 +97,46 @@ public class FilmService {
     }
 
     protected void validate(Film film, String message) {
+        if (film.getName() == null || film.getName().isBlank()) {
+            throw new ValidationException("Name cannot be empty");
+        }
+        if (film.getDescription() != null && film.getDescription().length() > 200) {
+            throw new ValidationException("Description cannot be longer than 200 characters");
+        }
         if (film.getReleaseDate() == null || film.getReleaseDate().isBefore(LIMIT_DATE)) {
-            log.debug(message);
-            throw new ValidationException(message);
+            throw new ValidationException("Release date is too early");
         }
         if (film.getReleaseDate().isAfter(LocalDate.now())) {
-            log.debug("Release date cannot be in the future");
             throw new ValidationException("Release date cannot be in the future");
         }
         if (film.getDuration() <= 0) {
-            log.debug("Duration must be positive");
             throw new ValidationException("Duration must be positive");
+        }
+        if (film.getMpa() == null) {
+            throw new ValidationException("MPA rating is required");
+        }
+
+        // Проверка MPA
+        MpaRating mpa = mpaStorage.getRatingMpaById(film.getMpa().getId());
+        if (mpa == null) {
+            throw new NotFoundException("MPA rating not found");
+        }
+
+        // Проверка жанров на дубликаты
+        if (film.getGenres() != null) {
+            Set<Integer> genreIds = new HashSet<>();
+            for (Genre genre : film.getGenres()) {
+                if (genreIds.contains(genre.getId())) {
+                    throw new ValidationException("Duplicate genres are not allowed");
+                }
+                genreIds.add(genre.getId());
+
+                // Проверка существования жанра
+                Genre existingGenre = genreStorage.getGenreById(genre.getId());
+                if (existingGenre == null) {
+                    throw new NotFoundException("Genre not found");
+                }
+            }
         }
     }
 }

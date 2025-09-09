@@ -31,7 +31,7 @@ public class Film {
     private int duration;
     private Set<Genre> genres = new HashSet<>();
     @NotNull
-    private Mpa mpa;
+    private MpaRating mpa;
 
     public void addLike(Integer id) {
         likes.add(id);

@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
@@ -9,7 +10,7 @@ import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.expectation.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Mpa;
+import ru.yandex.practicum.filmorate.model.MpaRating;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -64,13 +65,17 @@ public class FilmDbStorage implements FilmStorage {
     public Film getById(Integer filmId) {
         String sqlQuery = "SELECT f.*, rm.rating_name " + "FROM films f " + "JOIN rating_mpa rm ON f.rating_id = rm.rating_id " + "WHERE f.film_id = ?";
 
-        SqlRowSet srs = jdbcTemplate.queryForRowSet(sqlQuery, filmId);
-
-        if (srs.next()) {
-            return filmMap(srs);
-        } else {
-            throw new NotFoundException("Movie with ID = " + filmId + " not found");
+        try {
+            Film film = jdbcTemplate.queryForObject(sqlQuery, this::makeFilm, filmId);
+            if (film != null) {
+                // Загружаем жанры
+                film.setGenres(new HashSet<>(getGenres(filmId)));
+                return film;
+            }
+        } catch (EmptyResultDataAccessException e) {
+            // ignored
         }
+        throw new NotFoundException("Movie with ID = " + filmId + " not found");
     }
 
     public void addGenre(int filmId, Set<Genre> genres) {
@@ -92,12 +97,10 @@ public class FilmDbStorage implements FilmStorage {
         });
     }
 
-    private Set<Genre> getGenres(int filmId) {
-        Comparator<Genre> compId = Comparator.comparing(Genre::getId);
-        Set<Genre> genres = new TreeSet<>(compId);
-        String sqlQuery = "SELECT film_genres.genre_id, genres.genre_name FROM film_genres " + "JOIN genres ON genres.genre_id = film_genres.genre_id " + "WHERE film_id = ? ORDER BY genre_id ASC";
-        genres.addAll(jdbcTemplate.query(sqlQuery, this::makeGenre, filmId));
-        return genres;
+    private List<Genre> getGenres(int filmId) {
+        String sqlQuery = "SELECT g.genre_id, g.genre_name " + "FROM film_genres fg " + "JOIN genres g ON fg.genre_id = g.genre_id " + "WHERE fg.film_id = ? " + "ORDER BY g.genre_id";
+
+        return jdbcTemplate.query(sqlQuery, (rs, rowNum) -> new Genre(rs.getInt("genre_id"), rs.getString("genre_name")), filmId);
     }
 
     private void deleteAllGenresById(int filmId) {
@@ -140,7 +143,7 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     private Film makeFilm(ResultSet rs, int rowNum) throws SQLException {
-        Mpa mpa = new Mpa(rs.getInt("rating_id"), rs.getString("rating_name"));
+        MpaRating mpa = new MpaRating(rs.getInt("rating_id"), rs.getString("rating_name"));
 
         return Film.builder().id(rs.getInt("film_id")).name(rs.getString("film_name")).description(rs.getString("description")).duration(rs.getInt("duration")).releaseDate(rs.getDate("release_date").toLocalDate()).mpa(mpa).genres(new HashSet<>()).build();
     }
@@ -154,7 +157,7 @@ public class FilmDbStorage implements FilmStorage {
         int mpaId = srs.getInt("rating_id");
         String mpaName = srs.getString("rating_name");
 
-        Mpa mpa = new Mpa(mpaId, mpaName);
+        MpaRating mpa = new MpaRating(mpaId, mpaName);
         Set<Genre> genres = getGenres(id);
 
         return Film.builder().id(id).name(name).description(description).duration(duration).mpa(mpa).genres(genres).releaseDate(releaseDate).build();

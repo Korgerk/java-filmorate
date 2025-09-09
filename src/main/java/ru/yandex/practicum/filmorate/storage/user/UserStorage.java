@@ -15,4 +15,6 @@ public interface UserStorage extends FriendStorage {
     void delete(int id);
 
     User getById(Integer id);
+
+    boolean isFriend(int userId, int friendId);
 }

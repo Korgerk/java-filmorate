@@ -1,7 +1,11 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import ru.yandex.practicum.filmorate.expectation.NotFoundException;
+import ru.yandex.practicum.filmorate.expectation.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 
@@ -40,12 +44,24 @@ public class UserController {
 
     @PutMapping("/{id}/friends/{friendId}")
     public void addFriend(@PathVariable Integer id, @PathVariable Integer friendId) {
-        userService.addFriend(id, friendId);
+        try {
+            userService.addFriend(id, friendId);
+        } catch (NotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        } catch (ValidationException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
     }
 
     @DeleteMapping("/{id}/friends/{friendId}")
     public void removeFriend(@PathVariable Integer id, @PathVariable Integer friendId) {
-        userService.removeFriend(id, friendId);
+        try {
+            userService.removeFriend(id, friendId);
+        } catch (NotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        } catch (ValidationException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
     }
 
     @GetMapping("/{id}/friends")

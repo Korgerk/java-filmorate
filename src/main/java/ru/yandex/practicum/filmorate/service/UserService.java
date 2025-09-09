@@ -59,25 +59,37 @@ public class UserService {
     }
 
     public void addFriend(Integer userId, Integer friendId) {
-        checkUser(userId, friendId);
-
         User user = userStorage.getById(userId);
         User friend = userStorage.getById(friendId);
 
-        userStorage.addFriend(userId, friendId);
+        if (user == null) {
+            throw new NotFoundException("User with ID = " + userId + " not found");
+        }
+        if (friend == null) {
+            throw new NotFoundException("User with ID = " + friendId + " not found");
+        }
+        if (userId.equals(friendId)) {
+            throw new ValidationException("Cannot add yourself as friend");
+        }
 
-        log.info("User {} added friend {}", userId, friendId);
+        userStorage.addFriend(userId, friendId);
     }
 
     public void removeFriend(Integer userId, Integer friendId) {
-        checkUser(userId, friendId);
-
         User user = userStorage.getById(userId);
         User friend = userStorage.getById(friendId);
 
-        userStorage.removeFriend(userId, friendId);
+        if (user == null) {
+            throw new NotFoundException("User with ID = " + userId + " not found");
+        }
+        if (friend == null) {
+            throw new NotFoundException("User with ID = " + friendId + " not found");
+        }
+        if (!userStorage.isFriend(userId, friendId)) {
+            throw new NotFoundException("Users are not friends");
+        }
 
-        log.info("User {} removed friend {}", userId, friendId);
+        userStorage.removeFriend(userId, friendId);
     }
 
     public List<User> getAllFriends(Integer userId) {
