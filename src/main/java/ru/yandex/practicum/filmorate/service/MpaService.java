@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.expectation.NotFoundException;
 import ru.yandex.practicum.filmorate.model.MpaRating;
@@ -8,6 +9,7 @@ import ru.yandex.practicum.filmorate.storage.mpa.MpaStorage;
 import java.util.List;
 
 @Service
+@Slf4j
 public class MpaService {
     private final MpaStorage mpaStorage;
 

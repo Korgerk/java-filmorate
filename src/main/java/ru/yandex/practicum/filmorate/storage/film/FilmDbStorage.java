@@ -72,7 +72,6 @@ public class FilmDbStorage implements FilmStorage {
 
         try {
             Film film = jdbcTemplate.queryForObject(sqlQuery, this::makeFilm, filmId);
-            // Убери if (film != null) — он избыточен
             film.setGenres(new HashSet<>(getGenres(filmId)));
             return film;
         } catch (EmptyResultDataAccessException e) {
@@ -141,7 +140,7 @@ public class FilmDbStorage implements FilmStorage {
         jdbcTemplate.query(sqlQuery, (rs) -> {
             Integer filmId = rs.getInt("film_id");
             Film film = filmsTable.get(filmId);
-            if (film != null) { // ← проверка на null
+            if (film != null) {
                 film.addGenre(new Genre(rs.getInt("genre_id"), rs.getString("genre_name")));
             }
         }, filmsTable.keySet().toArray());

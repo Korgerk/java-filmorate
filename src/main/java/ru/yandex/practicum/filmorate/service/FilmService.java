@@ -137,7 +137,6 @@ public class FilmService {
                 }
                 genreIds.add(genre.getId());
 
-                // Проверка существования жанра
                 Genre existingGenre = genreStorage.getGenreById(genre.getId());
                 if (existingGenre == null) {
                     throw new NotFoundException("Genre with ID = " + genre.getId() + " not found");
