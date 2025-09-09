@@ -40,6 +40,25 @@ public class FilmService {
         return filmStorage.getAll();
     }
 
+    protected void validate(Film film, String message) {
+        if (film.getReleaseDate() == null || film.getReleaseDate().isBefore(LIMIT_DATE)) {
+            log.debug(message);
+            throw new ValidationException(message);
+        }
+        if (film.getReleaseDate().isAfter(LocalDate.now())) {
+            log.debug("Release date cannot be in the future");
+            throw new ValidationException("Release date cannot be in the future");
+        }
+        if (film.getDuration() <= 0) {
+            log.debug("Duration must be positive");
+            throw new ValidationException("Duration must be positive");
+        }
+        if (film.getDescription() != null && film.getDescription().length() > 200) {
+            log.debug("Description must be less than 200 characters");
+            throw new ValidationException("Description must be less than 200 characters");
+        }
+    }
+
     @Transactional
     public Film create(Film film) {
         validate(film, "Movie form is filled in incorrectly");
@@ -65,7 +84,6 @@ public class FilmService {
         }
 
         Film result = filmStorage.create(film);
-        log.info("Movie successfully added: " + film);
         return result;
     }
 
@@ -120,24 +138,5 @@ public class FilmService {
         List<Film> result = new ArrayList<>(filmStorage.getPopular(count));
         log.info("Requested a list of popular movies");
         return result;
-    }
-
-    protected void validate(Film film, String message) {
-        if (film.getReleaseDate() == null || film.getReleaseDate().isBefore(LIMIT_DATE)) {
-            log.debug(message);
-            throw new ValidationException(message);
-        }
-        if (film.getReleaseDate().isAfter(LocalDate.now())) {
-            log.debug("Release date cannot be in the future");
-            throw new ValidationException("Release date cannot be in the future");
-        }
-        if (film.getDuration() <= 0) {
-            log.debug("Duration must be positive");
-            throw new ValidationException("Duration must be positive");
-        }
-        if (film.getDescription() != null && film.getDescription().length() > 200) {
-            log.debug("Description must be less than 200 characters");
-            throw new ValidationException("Description must be less than 200 characters");
-        }
     }
 }

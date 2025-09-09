@@ -20,12 +20,12 @@ public class UserController {
     }
 
     @PostMapping
-    public User create(@Valid @RequestBody User user) {
+    public User create(@RequestBody @Valid User user) {
         return userService.create(user);
     }
 
     @PutMapping
-    public User update(@Valid @RequestBody User user) {
+    public User update(@RequestBody @Valid User user) {
         return userService.update(user);
     }
 

@@ -22,16 +22,22 @@ public class Film {
     private final Set<Integer> likes = new HashSet<>();
 
     private int id;
-    @NotBlank
+
+    @NotBlank(message = "Name cannot be empty")
     private String name;
-    @NotBlank
+
+    @NotBlank(message = "Name cannot be empty")
     private String description;
-    @NotNull
+
+    @NotNull(message = "Release date is required")
     private LocalDate releaseDate;
-    @Positive
+
+    @Positive(message = "Duration must be positive")
     private int duration;
+
     private Set<Genre> genres = new HashSet<>();
-    @NotNull
+
+    @NotNull(message = "Mpa rating is required")
     private MpaRating mpa;
 
     public void addLike(Integer id) {
