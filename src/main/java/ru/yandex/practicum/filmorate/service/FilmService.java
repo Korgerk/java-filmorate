@@ -11,6 +11,8 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MpaRating;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
+import ru.yandex.practicum.filmorate.storage.mpa.MpaStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
@@ -24,11 +26,16 @@ public class FilmService {
     private static final LocalDate LIMIT_DATE = LocalDate.from(LocalDateTime.of(1895, 12, 28, 0, 0));
     private final UserStorage userStorage;
     private final FilmStorage filmStorage;
+    private final MpaStorage mpaStorage;
+    private final GenreStorage genreStorage;
+
 
     @Autowired
-    public FilmService(FilmStorage filmStorage, UserStorage userStorage) {
-        this.userStorage = userStorage;
+    public FilmService(FilmStorage filmStorage, UserStorage userStorage, MpaStorage mpaService, GenreStorage genreService) {
         this.filmStorage = filmStorage;
+        this.userStorage = userStorage;
+        this.mpaStorage = mpaService;
+        this.genreStorage = genreService;
     }
 
     public Collection<Film> getAll() {
@@ -40,7 +47,7 @@ public class FilmService {
         validate(film, "Movie form is filled in incorrectly");
         Film result = filmStorage.create(film);
         log.info("Movie successfully added: " + film);
-        return result;
+        return getById(result.getId());
     }
 
     public Film update(Film film) {
@@ -116,16 +123,20 @@ public class FilmService {
             throw new ValidationException("MPA rating is required");
         }
 
-        // Проверка MPA
         MpaRating mpa = mpaStorage.getRatingMpaById(film.getMpa().getId());
         if (mpa == null) {
-            throw new NotFoundException("MPA rating not found");
+            throw new NotFoundException("MPA rating with ID = " + film.getMpa().getId() + " not found");
         }
 
-        // Проверка жанров на дубликаты
         if (film.getGenres() != null) {
             Set<Integer> genreIds = new HashSet<>();
             for (Genre genre : film.getGenres()) {
+                if (genre == null) {
+                    throw new ValidationException("Genre cannot be null");
+                }
+                if (genre.getId() <= 0) {
+                    throw new ValidationException("Genre ID must be positive");
+                }
                 if (genreIds.contains(genre.getId())) {
                     throw new ValidationException("Duplicate genres are not allowed");
                 }
@@ -134,7 +145,7 @@ public class FilmService {
                 // Проверка существования жанра
                 Genre existingGenre = genreStorage.getGenreById(genre.getId());
                 if (existingGenre == null) {
-                    throw new NotFoundException("Genre not found");
+                    throw new NotFoundException("Genre with ID = " + genre.getId() + " not found");
                 }
             }
         }

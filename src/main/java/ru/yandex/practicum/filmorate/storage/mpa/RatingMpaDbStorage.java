@@ -9,13 +9,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Repository
-public class RatingMpaDbStorage {
+public class RatingMpaDbStorage implements MpaStorage {
+
     private final JdbcTemplate jdbcTemplate;
 
     public RatingMpaDbStorage(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
 
+    @Override
     public MpaRating getRatingMpaById(int ratingId) {
         String sqlQuery = "SELECT * FROM rating_mpa WHERE rating_id = ?";
         SqlRowSet srs = jdbcTemplate.queryForRowSet(sqlQuery, ratingId);

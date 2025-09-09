@@ -3,20 +3,21 @@ package ru.yandex.practicum.filmorate.service;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.expectation.NotFoundException;
 import ru.yandex.practicum.filmorate.model.MpaRating;
-import ru.yandex.practicum.filmorate.storage.mpa.RatingMpaDbStorage;
+import ru.yandex.practicum.filmorate.storage.mpa.MpaStorage;
 
 import java.util.List;
 
 @Service
 public class MpaService {
-    private final RatingMpaDbStorage ratingMpaDbStorage;
+    private final MpaStorage mpaStorage;
 
-    public MpaService(RatingMpaDbStorage ratingMpaDbStorage) {
-        this.ratingMpaDbStorage = ratingMpaDbStorage;
+    public MpaService(MpaStorage mpaStorage) {
+        this.mpaStorage = mpaStorage;
+
     }
 
     public MpaRating getRatingMpaById(int id) {
-        MpaRating mpa = ratingMpaDbStorage.getRatingMpaById(id);
+        MpaRating mpa = mpaStorage.getRatingMpaById(id);
         if (mpa == null) {
             throw new NotFoundException("Rating not found");
         }
@@ -24,6 +25,6 @@ public class MpaService {
     }
 
     public List<MpaRating> getRatingsMpa() {
-        return ratingMpaDbStorage.getRatingsMpa();
+        return mpaStorage.getRatingsMpa();
     }
 }
