@@ -1,10 +1,13 @@
 package ru.yandex.practicum.filmorate.storage.user;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.expectation.NotFoundException;
+import ru.yandex.practicum.filmorate.expectation.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.UserRowMapper;
 import ru.yandex.practicum.filmorate.model.User;
 
@@ -72,8 +75,17 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public void addFriend(int userId, int friendId) {
-        String sqlQuery = "INSERT INTO friends (user_id, friend_id, status) VALUES (?, ?, false)";
-        jdbcTemplate.update(sqlQuery, userId, friendId);
+
+        if (isFriend(userId, friendId)) {
+            throw new ValidationException("Users are already friends");
+        }
+
+        String sqlQuery = "INSERT INTO friends (user_id, friend_id) VALUES (?, ?)";
+        try {
+            jdbcTemplate.update(sqlQuery, userId, friendId);
+        } catch (DataIntegrityViolationException e) {
+            throw new NotFoundException("User not found");
+        }
     }
 
     @Override
@@ -84,6 +96,11 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public List<User> getFriends(int userId) {
+        User user = getById(userId);
+        if (user == null) {
+            throw new NotFoundException("User with ID = " + userId + " not found");
+        }
+
         String sql = "SELECT u.* FROM users u " + "JOIN friends f ON u.user_id = f.friend_id " + "WHERE f.user_id = ?";
         return jdbcTemplate.query(sql, new UserRowMapper(), userId);
     }

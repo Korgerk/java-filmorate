@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.expectation.NotFoundException;
+import ru.yandex.practicum.filmorate.expectation.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MpaRating;
@@ -37,9 +38,20 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Film create(Film film) {
+        if (film.getMpa() == null || film.getMpa().getId() <= 0) {
+            throw new ValidationException("MPA rating is required");
+        }
+
+        String checkMpaSql = "SELECT COUNT(*) FROM rating_mpa WHERE rating_id = ?";
+        Integer mpaCount = jdbcTemplate.queryForObject(checkMpaSql, Integer.class, film.getMpa().getId());
+        if (mpaCount == null || mpaCount == 0) {
+            throw new NotFoundException("MPA rating with ID = " + film.getMpa().getId() + " not found");
+        }
+
         Map<String, Object> keys = new SimpleJdbcInsert(this.jdbcTemplate).withTableName("films").usingColumns("film_name", "description", "duration", "release_date", "rating_id").usingGeneratedKeyColumns("film_id").executeAndReturnKeyHolder(Map.of("film_name", film.getName(), "description", film.getDescription(), "duration", film.getDuration(), "release_date", java.sql.Date.valueOf(film.getReleaseDate()), "rating_id", film.getMpa().getId())).getKeys();
+
         film.setId((Integer) keys.get("film_id"));
-        addGenre((Integer) keys.get("film_id"), film.getGenres());
+        addGenre(film.getId(), film.getGenres());
         return film;
     }
 
@@ -78,24 +90,26 @@ public class FilmDbStorage implements FilmStorage {
         if (genres == null || genres.isEmpty()) {
             return;
         }
-        String sqlQuery = "INSERT INTO film_genres (film_id, genre_id) " + "VALUES (?, ?)";
-        List<Genre> genresTable = new ArrayList<>(genres);
+
+        Set<Genre> uniqueGenres = genres.stream().filter(Objects::nonNull).collect(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparingInt(Genre::getId))));
+
+        String sqlQuery = "INSERT INTO film_genres (film_id, genre_id) VALUES (?, ?)";
+        List<Genre> genresList = new ArrayList<>(uniqueGenres);
         this.jdbcTemplate.batchUpdate(sqlQuery, new BatchPreparedStatementSetter() {
             public void setValues(PreparedStatement ps, int i) throws SQLException {
                 ps.setInt(1, filmId);
-                ps.setInt(2, genresTable.get(i).getId());
+                ps.setInt(2, genresList.get(i).getId());
             }
 
             public int getBatchSize() {
-                return genresTable.size();
+                return genresList.size();
             }
         });
     }
 
     private Set<Genre> getGenres(int filmId) {
-        Comparator<Genre> compId = Comparator.comparing(Genre::getId);
-        Set<Genre> genres = new TreeSet<>(compId);
-        String sqlQuery = "SELECT film_genres.genre_id, genres.genre_name FROM film_genres " + "JOIN genres ON genres.genre_id = film_genres.genre_id " + "WHERE film_id = ? ORDER BY genre_id ASC";
+        Set<Genre> genres = new TreeSet<>(Comparator.comparingInt(Genre::getId));
+        String sqlQuery = "SELECT DISTINCT film_genres.genre_id, genres.genre_name " + "FROM film_genres " + "JOIN genres ON genres.genre_id = film_genres.genre_id " + "WHERE film_id = ? ORDER BY genre_id ASC";
         genres.addAll(jdbcTemplate.query(sqlQuery, this::makeGenre, filmId));
         return genres;
     }
@@ -136,6 +150,9 @@ public class FilmDbStorage implements FilmStorage {
     private Genre makeGenre(ResultSet rs, int id) throws SQLException {
         int genreId = rs.getInt("genre_id");
         String genreName = rs.getString("genre_name");
+        if (rs.wasNull()) {
+            return null;
+        }
         return new Genre(genreId, genreName);
     }
 

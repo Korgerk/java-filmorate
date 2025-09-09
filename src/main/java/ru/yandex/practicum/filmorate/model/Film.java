@@ -42,7 +42,11 @@ public class Film {
     }
 
     public void addGenre(Genre genre) {
-        genres.add(genre);
+        boolean isDuplicate = genres.stream().anyMatch(g -> g.getId() == genre.getId());
+
+        if (!isDuplicate) {
+            genres.add(genre);
+        }
     }
 
     public void removeAllGenres() {

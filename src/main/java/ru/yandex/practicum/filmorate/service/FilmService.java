@@ -2,11 +2,13 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.expectation.NotFoundException;
 import ru.yandex.practicum.filmorate.expectation.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
@@ -24,6 +26,7 @@ public class FilmService {
     private static final LocalDate LIMIT_DATE = LocalDate.from(LocalDateTime.of(1895, 12, 28, 0, 0));
     private final UserStorage userStorage;
     private final FilmStorage filmStorage;
+    private JdbcOperations jdbcTemplate;
 
     @Autowired
     public FilmService(FilmStorage filmStorage, UserStorage userStorage) {
@@ -36,8 +39,28 @@ public class FilmService {
         return filmStorage.getAll();
     }
 
+    @Transactional
     public Film create(Film film) {
         validate(film, "Movie form is filled in incorrectly");
+
+        if (film.getMpa() != null) {
+            String checkMpaSql = "SELECT COUNT(*) FROM rating_mpa WHERE rating_id = ?";
+            Integer mpaCount = jdbcTemplate.queryForObject(checkMpaSql, Integer.class, film.getMpa().getId());
+            if (mpaCount == null || mpaCount == 0) {
+                throw new NotFoundException("MPA rating with ID = " + film.getMpa().getId() + " not found");
+            }
+        }
+
+        if (film.getGenres() != null && !film.getGenres().isEmpty()) {
+            for (Genre genre : film.getGenres()) {
+                String checkGenreSql = "SELECT COUNT(*) FROM genres WHERE genre_id = ?";
+                Integer genreCount = jdbcTemplate.queryForObject(checkGenreSql, Integer.class, genre.getId());
+                if (genreCount == null || genreCount == 0) {
+                    throw new NotFoundException("Genre with ID = " + genre.getId() + " not found");
+                }
+            }
+        }
+
         Film result = filmStorage.create(film);
         log.info("Movie successfully added: " + film);
         return result;
@@ -108,6 +131,10 @@ public class FilmService {
         if (film.getDuration() <= 0) {
             log.debug("Duration must be positive");
             throw new ValidationException("Duration must be positive");
+        }
+        if (film.getDescription() != null && film.getDescription().length() > 200) {
+            log.debug("Description must be less than 200 characters");
+            throw new ValidationException("Description must be less than 200 characters");
         }
     }
 }

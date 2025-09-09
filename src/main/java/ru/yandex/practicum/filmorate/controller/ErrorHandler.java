@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.ConstraintDeclarationException;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -31,11 +32,11 @@ public class ErrorHandler {
     }
 
     @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleDataIntegrityViolationException(DataIntegrityViolationException e) {
-        log.error("400 BAD_REQUEST - Data integrity violation", e);
+        log.error("Data integrity violation", e);
 
-        if (e.getMessage() != null && e.getMessage().contains("foreign key")) {
+        if (e.getMessage() != null && (e.getMessage().contains("foreign key") || e.getMessage().contains("REFERENCES") || e.getMessage().contains("constraint"))) {
             return new ErrorResponse("Referenced entity not found");
         }
 
@@ -61,6 +62,13 @@ public class ErrorHandler {
     public ErrorResponse handleRuntimeException(RuntimeException e) {
         log.error("500 INTERNAL_SERVER_ERROR", e);
         return new ErrorResponse("Internal server error");
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleConstraintViolationException(ConstraintViolationException e) {
+        log.error("400 BAD_REQUEST - Constraint violation", e);
+        return new ErrorResponse("Validation failed: " + e.getMessage());
     }
 
     private static class ErrorResponse {

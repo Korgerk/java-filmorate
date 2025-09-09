@@ -12,7 +12,6 @@ import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 @Service
@@ -58,25 +57,34 @@ public class UserService {
         return userStorage.getById(id);
     }
 
+    @Transactional
     public void addFriend(Integer userId, Integer friendId) {
-        checkUser(userId, friendId);
-
         User user = userStorage.getById(userId);
         User friend = userStorage.getById(friendId);
 
-        userStorage.addFriend(userId, friendId);
+        if (user == null) {
+            throw new NotFoundException("User with ID = " + userId + " not found");
+        }
+        if (friend == null) {
+            throw new NotFoundException("User with ID = " + friendId + " not found");
+        }
 
+        userStorage.addFriend(userId, friendId);
         log.info("User {} added friend {}", userId, friendId);
     }
 
     public void removeFriend(Integer userId, Integer friendId) {
-        checkUser(userId, friendId);
-
         User user = userStorage.getById(userId);
         User friend = userStorage.getById(friendId);
 
-        userStorage.removeFriend(userId, friendId);
+        if (user == null) {
+            throw new NotFoundException("User with ID = " + userId + " not found");
+        }
+        if (friend == null) {
+            throw new NotFoundException("User with ID = " + friendId + " not found");
+        }
 
+        userStorage.removeFriend(userId, friendId);
         log.info("User {} removed friend {}", userId, friendId);
     }
 
@@ -112,8 +120,14 @@ public class UserService {
         }
     }
 
-    public List<User> getFriends(int userId) {
-        User user = getById(userId);
-        return user.getFriendIds().stream().map(friendId -> getById(friendId)).collect(Collectors.toList());
+    public List<User> getFriends(Integer userId) {
+        User user = userStorage.getById(userId);
+        if (user == null) {
+            throw new NotFoundException("User with ID = " + userId + " not found");
+        }
+
+        List<User> result = userStorage.getFriends(userId);
+        log.info("Friends of user with ID = " + userId + ": " + result);
+        return result;
     }
 }
