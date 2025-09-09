@@ -23,7 +23,7 @@ public class FilmController {
     }
 
     @PostMapping
-    public Film create(@RequestBody @Valid Film film) {
+    public Film create(@Valid @RequestBody Film film) {
         if (film.getMpa() == null) {
             throw new ValidationException("MPA rating is required");
         }
@@ -40,7 +40,7 @@ public class FilmController {
     }
 
     @PutMapping
-    public Film update(@RequestBody @Valid Film film) {
+    public Film update(@Valid @RequestBody Film film) {
         return filmService.update(film);
     }
 

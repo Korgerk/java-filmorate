@@ -44,37 +44,37 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public Film create(Film film) {
         log.debug("Creating film: {}", film);
-        try {
-            if (film.getMpa() != null) {
-                String checkMpaSql = "SELECT COUNT(*) FROM rating_mpa WHERE rating_id = ?";
-                Integer mpaCount = jdbcTemplate.queryForObject(checkMpaSql, Integer.class, film.getMpa().getId());
-                if (mpaCount == null || mpaCount == 0) {
-                    throw new NotFoundException("MPA rating with ID = " + film.getMpa().getId() + " not found");
-                }
+
+        // Проверка MPA
+        if (film.getMpa() != null) {
+            String checkMpaSql = "SELECT COUNT(*) FROM rating_mpa WHERE rating_id = ?";
+            Integer mpaCount = jdbcTemplate.queryForObject(checkMpaSql, Integer.class, film.getMpa().getId());
+            if (mpaCount == null || mpaCount == 0) {
+                throw new NotFoundException("MPA rating with ID = " + film.getMpa().getId() + " not found");
             }
-
-            SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate).withTableName("films").usingGeneratedKeyColumns("film_id");
-
-            Map<String, Object> parameters = new HashMap<>();
-            parameters.put("film_name", film.getName());
-            parameters.put("description", film.getDescription());
-            parameters.put("duration", film.getDuration());
-            parameters.put("release_date", java.sql.Date.valueOf(film.getReleaseDate()));
-            parameters.put("rating_id", film.getMpa().getId());
-
-            Number key = simpleJdbcInsert.executeAndReturnKey(parameters);
-            film.setId(key.intValue());
-
-            if (film.getGenres() != null && !film.getGenres().isEmpty()) {
-                addGenre(film.getId(), film.getGenres());
-            }
-
-            log.debug("Film created successfully with ID: {}", film.getId());
-            return film;
-        } catch (Exception e) {
-            log.error("Error creating film: {}", film, e);
-            throw new RuntimeException("Failed to create film", e);
         }
+
+        // Вставка фильма
+        SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate).withTableName("films").usingGeneratedKeyColumns("film_id");
+
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("film_name", film.getName());
+        parameters.put("description", film.getDescription());
+        parameters.put("duration", film.getDuration());
+        parameters.put("release_date", java.sql.Date.valueOf(film.getReleaseDate()));
+        parameters.put("rating_id", film.getMpa().getId());
+
+        Number key = simpleJdbcInsert.executeAndReturnKey(parameters);
+        film.setId(key.intValue());
+
+        // Проверка и добавление жанров
+        if (film.getGenres() != null && !film.getGenres().isEmpty()) {
+            validateGenres(film.getGenres()); // ← новая проверка
+            addGenre(film.getId(), film.getGenres());
+        }
+
+        log.debug("Film created successfully with ID: {}", film.getId());
+        return film;
     }
 
     @Override
@@ -280,8 +280,7 @@ public class FilmDbStorage implements FilmStorage {
             java.sql.Date releaseDateSql = rs.getDate("release_date");
             LocalDate releaseDate = releaseDateSql != null ? releaseDateSql.toLocalDate() : null;
 
-            Film film = Film.builder().id(rs.getInt("film_id")).name(rs.getString("film_name")).description(rs.getString("description")).duration(rs.getInt("duration")).releaseDate(releaseDate).mpa(mpa).genres(new HashSet<>())
-                    .build();
+            Film film = Film.builder().id(rs.getInt("film_id")).name(rs.getString("film_name")).description(rs.getString("description")).duration(rs.getInt("duration")).releaseDate(releaseDate).mpa(mpa).genres(new HashSet<>()).build();
 
             return film;
         } catch (SQLException e) {
@@ -318,6 +317,16 @@ public class FilmDbStorage implements FilmStorage {
         } catch (Exception e) {
             log.error("Error mapping film from SqlRowSet", e);
             throw new RuntimeException("Failed to map film from database", e);
+        }
+    }
+
+    private void validateGenres(Set<Genre> genres) {
+        for (Genre genre : genres) {
+            String sql = "SELECT COUNT(*) FROM genres WHERE genre_id = ?";
+            Integer count = jdbcTemplate.queryForObject(sql, Integer.class, genre.getId());
+            if (count == null || count == 0) {
+                throw new NotFoundException("Genre with ID = " + genre.getId() + " not found");
+            }
         }
     }
 }
