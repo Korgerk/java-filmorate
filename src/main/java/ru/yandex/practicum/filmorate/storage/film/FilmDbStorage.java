@@ -54,15 +54,17 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
-    public String delete(int filmId) {
+    public void delete(int filmId) {
         String sqlQuery = "DELETE FROM films WHERE film_id = ?";
-        return sqlQuery;
+        jdbcTemplate.update(sqlQuery, filmId);
     }
 
     @Override
     public Film getById(Integer filmId) {
-        String sqlQuery = "SELECT * FROM films " + "JOIN rating_mpa ON films.rating_id = rating_mpa.rating_id " + "WHERE film_id = ?";
+        String sqlQuery = "SELECT f.*, rm.rating_name " + "FROM films f " + "JOIN rating_mpa rm ON f.rating_id = rm.rating_id " + "WHERE f.film_id = ?";
+
         SqlRowSet srs = jdbcTemplate.queryForRowSet(sqlQuery, filmId);
+
         if (srs.next()) {
             return filmMap(srs);
         } else {
@@ -133,17 +135,11 @@ public class FilmDbStorage implements FilmStorage {
         return new Genre(genreId, genreName);
     }
 
-    private Film makeFilm(ResultSet rs, int id) throws SQLException {
-        int filmId = rs.getInt("film_id");
-        String name = rs.getString("film_name");
-        String description = rs.getString("description");
-        int duration = rs.getInt("duration");
-        LocalDate releaseDate = rs.getTimestamp("release_date").toLocalDateTime().toLocalDate();
-        int mpaId = rs.getInt("rating_id");
-        String mpaName = rs.getString("rating_name");
-        MpaRating mpa = new MpaRating(mpaId, mpaName);
-        Set<Genre> genres = new HashSet<>();
-        return Film.builder().id(filmId).name(name).description(description).duration(duration).genres(genres).mpa(mpa).releaseDate(releaseDate).build();
+    private Film makeFilm(ResultSet rs, int rowNum) throws SQLException {
+        MpaRating mpa = new MpaRating(rs.getInt("rating_id"), rs.getString("rating_name"));
+
+        return Film.builder().id(rs.getInt("film_id")).name(rs.getString("film_name")).description(rs.getString("description")).duration(rs.getInt("duration")).releaseDate(rs.getDate("release_date").toLocalDate()).mpa(mpa).genres(new HashSet<>())
+                .build();
     }
 
     private Film filmMap(SqlRowSet srs) {
@@ -154,8 +150,10 @@ public class FilmDbStorage implements FilmStorage {
         LocalDate releaseDate = Objects.requireNonNull(srs.getTimestamp("release_date")).toLocalDateTime().toLocalDate();
         int mpaId = srs.getInt("rating_id");
         String mpaName = srs.getString("rating_name");
+
         MpaRating mpa = new MpaRating(mpaId, mpaName);
         Set<Genre> genres = getGenres(id);
+
         return Film.builder().id(id).name(name).description(description).duration(duration).mpa(mpa).genres(genres).releaseDate(releaseDate).build();
     }
 }

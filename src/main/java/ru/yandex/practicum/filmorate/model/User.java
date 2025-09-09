@@ -29,14 +29,4 @@ public class User {
     @PastOrPresent
     @NotNull
     private LocalDate birthday;
-
-    @NotNull
-
-    public void addFriend(Integer id) {
-        friendIds.add(id);
-    }
-
-    public void deleteFriend(Integer id) {
-        friendIds.remove(id);
-    }
 }

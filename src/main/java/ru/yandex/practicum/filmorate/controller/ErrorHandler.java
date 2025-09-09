@@ -1,37 +1,68 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import jakarta.validation.ConstraintDeclarationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.yandex.practicum.filmorate.expectation.NotFoundException;
+import ru.yandex.practicum.filmorate.expectation.ValidationException;
+
 
 @Slf4j
 @RestControllerAdvice
 public class ErrorHandler {
+
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ResponseBody
-    public ErrorResponse handleDataIntegrityViolationException(DataIntegrityViolationException e) {
+    public ErrorResponse handleValidationException(ValidationException e) {
         log.error("400 BAD_REQUEST", e);
-        return new ErrorResponse("Invalid data provided: " + e.getMessage());
+        return new ErrorResponse(e.getMessage());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+        log.error("400 BAD_REQUEST", e);
+        return new ErrorResponse(e.getMessage());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleDataIntegrityViolationException(DataIntegrityViolationException e) {
+        log.error("400 BAD_REQUEST - Data integrity violation", e);
+
+        if (e.getMessage().contains("foreign key")) {
+            return new ErrorResponse("Referenced entity not found");
+        } else if (e.getMessage().contains("unique constraint")) {
+            return new ErrorResponse("Duplicate entry found");
+        }
+
+        return new ErrorResponse("Invalid data provided");
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ErrorResponse handleNotFoundException(final NotFoundException e) {
-        log.error(HttpStatus.NOT_FOUND.toString(), e);
+    public ErrorResponse handleNotFoundException(NotFoundException e) {
+        log.error("404 NOT_FOUND", e);
         return new ErrorResponse(e.getMessage());
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ErrorResponse handleRunTimeException(final RuntimeException e) {
-        log.error(HttpStatus.INTERNAL_SERVER_ERROR.toString(), e);
-        return new ErrorResponse(e.getMessage());
+    public ErrorResponse handleConstraintDeclarationException(ConstraintDeclarationException e) {
+        log.error("Validation configuration error (HV000132)", e);
+        return new ErrorResponse("Internal server configuration error");
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponse handleRuntimeException(RuntimeException e) {
+        log.error("500 INTERNAL_SERVER_ERROR", e);
+        return new ErrorResponse("Internal server error");
     }
 
     private static class ErrorResponse {

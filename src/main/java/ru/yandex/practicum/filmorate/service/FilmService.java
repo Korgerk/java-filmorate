@@ -3,9 +3,11 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.expectation.NotFoundException;
 import ru.yandex.practicum.filmorate.expectation.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
@@ -17,6 +19,7 @@ import java.util.List;
 
 @Slf4j
 @Service
+@Transactional
 public class FilmService {
     private static final LocalDate LIMIT_DATE = LocalDate.from(LocalDateTime.of(1895, 12, 28, 0, 0));
     private final UserStorage userStorage;
@@ -43,21 +46,14 @@ public class FilmService {
     public Film update(Film film) {
         validate(film, "Movie update form is filled in incorrectly");
 
-        if (getById(film.getId()) == null) {
+        Film existingFilm = filmStorage.getById(film.getId());
+        if (existingFilm == null) {
             throw new NotFoundException("Movie with ID = " + film.getId() + " not found");
         }
 
         Film result = filmStorage.update(film);
-        log.info("Movie successfully updated: " + film);
+        log.info("Movie successfully updated: {}", film);
         return result;
-    }
-
-    public void delete(int filmId) {
-        if (getById(filmId) == null) {
-            throw new NotFoundException("Movie with ID = " + filmId + " not found");
-        }
-        log.info("Deleted film with id: {}", filmId);
-        filmStorage.delete(filmId);
     }
 
     public Film getById(Integer id) {
@@ -67,16 +63,17 @@ public class FilmService {
 
     public void addLike(Integer filmId, Integer userId) {
         Film film = filmStorage.getById(filmId);
-        if (film != null) {
-            if (userStorage.getById(userId) != null) {
-                filmStorage.addLike(filmId, userId);
-                log.info("Like successfully added");
-            } else {
-                throw new NotFoundException("User with ID = " + userId + " not found");
-            }
-        } else {
+        User user = userStorage.getById(userId);
+
+        if (film == null) {
             throw new NotFoundException("Movie with ID = " + filmId + " not found");
         }
+        if (user == null) {
+            throw new NotFoundException("User with ID = " + userId + " not found");
+        }
+
+        filmStorage.addLike(filmId, userId);
+        log.info("Like successfully added to film {} by user {}", filmId, userId);
     }
 
     public void removeLike(Integer filmId, Integer userId) {
@@ -103,6 +100,10 @@ public class FilmService {
         if (film.getReleaseDate() == null || film.getReleaseDate().isBefore(LIMIT_DATE)) {
             log.debug(message);
             throw new ValidationException(message);
+        }
+        if (film.getReleaseDate().isAfter(LocalDate.now())) {
+            log.debug("Release date cannot be in the future");
+            throw new ValidationException("Release date cannot be in the future");
         }
         if (film.getDuration() <= 0) {
             log.debug("Duration must be positive");

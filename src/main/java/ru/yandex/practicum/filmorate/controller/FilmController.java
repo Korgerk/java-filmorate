@@ -1,8 +1,6 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
@@ -10,40 +8,34 @@ import ru.yandex.practicum.filmorate.service.FilmService;
 import java.util.Collection;
 import java.util.List;
 
-@Slf4j
 @RestController
 @RequestMapping("/films")
 public class FilmController {
+
     private final FilmService filmService;
 
-    @Autowired
     public FilmController(FilmService filmService) {
         this.filmService = filmService;
     }
 
-    @GetMapping
-    public Collection<Film> getAll() {
-        return filmService.getAll();
-    }
-
     @PostMapping
     public Film create(@Valid @RequestBody Film film) {
-        return filmService.create(film); // Возвращаем результат сервиса
+        return filmService.create(film);
     }
 
     @PutMapping
     public Film update(@Valid @RequestBody Film film) {
-        return filmService.update(film); // Возвращаем результат сервиса
-    }
-
-    @DeleteMapping("/{id}")
-    public void deleteById(@PathVariable int filmId) {
-        filmService.delete(filmId);
+        return filmService.update(film);
     }
 
     @GetMapping("/{id}")
     public Film getFilmById(@PathVariable Integer id) {
         return filmService.getById(id);
+    }
+
+    @GetMapping
+    public Collection<Film> getAllFilms() {
+        return filmService.getAll();
     }
 
     @PutMapping("/{id}/like/{userId}")

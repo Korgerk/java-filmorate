@@ -2,28 +2,21 @@ package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 
-import java.util.Collection;
 import java.util.List;
 
-@Slf4j
+
 @RestController
 @RequestMapping("/users")
 public class UserController {
-    final UserService userService;
 
-    @Autowired
+    private final UserService userService;
+
     public UserController(UserService userService) {
         this.userService = userService;
-    }
-
-    @GetMapping
-    public Collection<User> getAll() {
-        return userService.getAll();
     }
 
     @PostMapping
@@ -36,14 +29,14 @@ public class UserController {
         return userService.update(user);
     }
 
-    @DeleteMapping("/{id}")
-    public void deleteById(@PathVariable int userId) {
-        userService.delete(userId);
-    }
-
     @GetMapping("/{id}")
     public User getUserById(@PathVariable Integer id) {
         return userService.getById(id);
+    }
+
+    @GetMapping
+    public List<User> getAllUsers() {
+        return userService.getAll();
     }
 
     @PutMapping("/{id}/friends/{friendId}")
@@ -57,8 +50,8 @@ public class UserController {
     }
 
     @GetMapping("/{id}/friends")
-    public List<User> getAllFriends(@PathVariable Integer id) {
-        return userService.getAllFriends(id);
+    public List<User> getFriends(@PathVariable Integer id) {
+        return userService.getFriends(id);
     }
 
     @GetMapping("/{id}/friends/common/{otherId}")
