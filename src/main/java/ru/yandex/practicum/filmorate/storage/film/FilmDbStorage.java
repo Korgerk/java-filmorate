@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.expectation.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.MpaRating;
+import ru.yandex.practicum.filmorate.model.Mpa;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -140,7 +140,7 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     private Film makeFilm(ResultSet rs, int rowNum) throws SQLException {
-        MpaRating mpa = new MpaRating(rs.getInt("rating_id"), rs.getString("rating_name"));
+        Mpa mpa = new Mpa(rs.getInt("rating_id"), rs.getString("rating_name"));
 
         return Film.builder().id(rs.getInt("film_id")).name(rs.getString("film_name")).description(rs.getString("description")).duration(rs.getInt("duration")).releaseDate(rs.getDate("release_date").toLocalDate()).mpa(mpa).genres(new HashSet<>()).build();
     }
@@ -154,7 +154,7 @@ public class FilmDbStorage implements FilmStorage {
         int mpaId = srs.getInt("rating_id");
         String mpaName = srs.getString("rating_name");
 
-        MpaRating mpa = new MpaRating(mpaId, mpaName);
+        Mpa mpa = new Mpa(mpaId, mpaName);
         Set<Genre> genres = getGenres(id);
 
         return Film.builder().id(id).name(name).description(description).duration(duration).mpa(mpa).genres(genres).releaseDate(releaseDate).build();

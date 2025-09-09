@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class MpaRating {
+public class Mpa {
 
     @Positive
     protected int id;
