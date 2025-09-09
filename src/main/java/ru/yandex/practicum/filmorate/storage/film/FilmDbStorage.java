@@ -292,9 +292,11 @@ public class FilmDbStorage implements FilmStorage {
             int duration = srs.getInt("duration");
 
             LocalDate releaseDate = null;
-            java.sql.Date releaseDateSql = (java.sql.Date) srs.getObject("release_date");
-            if (releaseDateSql != null) {
-                releaseDate = releaseDateSql.toLocalDate();
+            Object dateObj = srs.getObject("release_date");
+            if (dateObj instanceof java.sql.Date) {
+                releaseDate = ((java.sql.Date) dateObj).toLocalDate();
+            } else if (dateObj instanceof java.sql.Timestamp) {
+                releaseDate = ((java.sql.Timestamp) dateObj).toLocalDateTime().toLocalDate();
             }
 
             int mpaId = srs.getInt("rating_id");

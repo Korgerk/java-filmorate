@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcOperations;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.expectation.NotFoundException;
@@ -26,12 +27,13 @@ public class FilmService {
     private static final LocalDate LIMIT_DATE = LocalDate.from(LocalDateTime.of(1895, 12, 28, 0, 0));
     private final UserStorage userStorage;
     private final FilmStorage filmStorage;
-    private JdbcOperations jdbcTemplate;
+    private JdbcTemplate jdbcTemplate;
 
     @Autowired
     public FilmService(FilmStorage filmStorage, UserStorage userStorage) {
         this.userStorage = userStorage;
         this.filmStorage = filmStorage;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     public Collection<Film> getAll() {

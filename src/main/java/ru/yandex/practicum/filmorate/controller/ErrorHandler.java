@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.controller;
 import jakarta.validation.ConstraintDeclarationException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -11,6 +12,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.yandex.practicum.filmorate.expectation.NotFoundException;
 import ru.yandex.practicum.filmorate.expectation.ValidationException;
+
+import java.sql.SQLException;
 
 
 @Slf4j
@@ -69,6 +72,20 @@ public class ErrorHandler {
     public ErrorResponse handleConstraintViolationException(ConstraintViolationException e) {
         log.error("400 BAD_REQUEST - Constraint violation", e);
         return new ErrorResponse("Validation failed: " + e.getMessage());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponse handleSQLException(SQLException e) {
+        log.error("Database error: {}", e.getMessage());
+        return new ErrorResponse("Database error: " + e.getMessage());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponse handleDataAccessException(DataAccessException e) {
+        log.error("Data access error: {}", e.getMessage());
+        return new ErrorResponse("Data access error: " + e.getMessage());
     }
 
     private static class ErrorResponse {
