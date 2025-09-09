@@ -35,7 +35,7 @@ public class GenreDbStorage implements GenreStorage {
     @Override
     public List<Genre> getAllGenres() {
         List<Genre> genres = new ArrayList<>();
-        String sqlQuery = "SELECT * FROM genres ";
+        String sqlQuery = "SELECT * FROM genres ORDER BY genre_id";
         SqlRowSet srs = jdbcTemplate.queryForRowSet(sqlQuery);
         while (srs.next()) {
             genres.add(new Genre(srs.getInt("genre_id"), srs.getString("genre_name")));

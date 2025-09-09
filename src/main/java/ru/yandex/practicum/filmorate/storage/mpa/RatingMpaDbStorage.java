@@ -27,7 +27,7 @@ public class RatingMpaDbStorage {
 
     public List<MpaRating> getRatingsMpa() {
         List<MpaRating> ratingsMpa = new ArrayList<>();
-        String sqlQuery = "SELECT * FROM rating_mpa";
+        String sqlQuery = "SELECT * FROM rating_mpa ORDER BY rating_id";
         SqlRowSet srs = jdbcTemplate.queryForRowSet(sqlQuery);
         while (srs.next()) {
             ratingsMpa.add(new MpaRating(srs.getInt("rating_id"), srs.getString("rating_name")));

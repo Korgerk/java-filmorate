@@ -29,7 +29,8 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Collection<Film> getAll() {
-        String sqlQuery = "SELECT * FROM films " + "JOIN rating_mpa ON films.rating_id = rating_mpa.rating_id " + "LEFT JOIN film_genres ON film_genres.film_id = films.film_id " + "LEFT JOIN genres ON genres.genre_id = film_genres.genre_id";
+        String sqlQuery = "SELECT f.*, rm.rating_name FROM films f " + "JOIN rating_mpa rm ON f.rating_id = rm.rating_id";
+
         List<Film> films = jdbcTemplate.query(sqlQuery, this::makeFilm);
         return addGenreForList(films);
     }
@@ -114,9 +115,12 @@ public class FilmDbStorage implements FilmStorage {
         jdbcTemplate.update(sqlQuery, filmId, userId);
     }
 
+    @Override
     public List<Film> getPopular(Integer count) {
-        String sqlQuery = "SELECT * FROM films " + "LEFT JOIN likes ON likes.film_id = films.film_id " + "JOIN rating_mpa ON films.rating_id = rating_mpa.rating_id " + "GROUP BY films.film_id " + "ORDER BY COUNT (likes.film_id) DESC " + "LIMIT " + count;
-        return jdbcTemplate.query(sqlQuery, this::makeFilm);
+        String sqlQuery = "SELECT f.*, rm.rating_name, COUNT(l.user_id) as likes_count " + "FROM films f " + "JOIN rating_mpa rm ON f.rating_id = rm.rating_id " + "LEFT JOIN likes l ON f.film_id = l.film_id " + "GROUP BY f.film_id " + "ORDER BY likes_count DESC " + "LIMIT ?";
+
+        List<Film> films = jdbcTemplate.query(sqlQuery, this::makeFilm, count);
+        return addGenreForList(films);
     }
 
     private List<Film> addGenreForList(List<Film> films) {

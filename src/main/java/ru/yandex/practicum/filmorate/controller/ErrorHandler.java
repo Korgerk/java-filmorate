@@ -35,10 +35,8 @@ public class ErrorHandler {
     public ErrorResponse handleDataIntegrityViolationException(DataIntegrityViolationException e) {
         log.error("400 BAD_REQUEST - Data integrity violation", e);
 
-        if (e.getMessage().contains("foreign key")) {
+        if (e.getMessage() != null && e.getMessage().contains("foreign key")) {
             return new ErrorResponse("Referenced entity not found");
-        } else if (e.getMessage().contains("unique constraint")) {
-            return new ErrorResponse("Duplicate entry found");
         }
 
         return new ErrorResponse("Invalid data provided");
@@ -47,7 +45,7 @@ public class ErrorHandler {
     @ExceptionHandler
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleNotFoundException(NotFoundException e) {
-        log.error("404 NOT_FOUND", e);
+        log.error("404 NOT_FOUND: {}", e.getMessage());
         return new ErrorResponse(e.getMessage());
     }
 
