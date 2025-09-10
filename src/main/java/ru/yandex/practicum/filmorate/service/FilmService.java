@@ -12,16 +12,13 @@ import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 @Slf4j
 @Service
 @Transactional
 public class FilmService {
-    private static final LocalDate LIMIT_DATE = LocalDate.from(LocalDateTime.of(1895, 12, 28, 0, 0));
+    private static final LocalDate LIMIT_DATE = LocalDate.of(1895, 12, 28);
     private final UserStorage userStorage;
     private final FilmStorage filmStorage;
 
@@ -57,8 +54,12 @@ public class FilmService {
     }
 
     public Film getById(Integer id) {
-        log.info("Requested user with ID = " + id);
-        return filmStorage.getById(id);
+        Film film = filmStorage.getById(id);
+        if (film == null) {
+            throw new NotFoundException("Movie with ID = " + id + " not found");
+        }
+        log.info("Requested movie with ID = " + id);
+        return film;
     }
 
     public void addLike(Integer filmId, Integer userId) {
@@ -78,36 +79,44 @@ public class FilmService {
 
     public void removeLike(Integer filmId, Integer userId) {
         Film film = filmStorage.getById(filmId);
-        if (film != null) {
-            if (userStorage.getById(userId) != null) {
-                filmStorage.removeLike(filmId, userId);
-                log.info("Like successfully removed");
-            } else {
-                throw new NotFoundException("User with ID = " + userId + " not found");
-            }
-        } else {
+        if (film == null) {
             throw new NotFoundException("Movie with ID = " + filmId + " not found");
         }
+        if (userStorage.getById(userId) == null) {
+            throw new NotFoundException("User with ID = " + userId + " not found");
+        }
+
+        filmStorage.removeLike(filmId, userId);
+        log.info("Like successfully removed");
     }
 
     public List<Film> getPopular(Integer count) {
-        List<Film> result = new ArrayList<>(filmStorage.getPopular(count));
+        List<Film> result = filmStorage.getPopular(count);
         log.info("Requested a list of popular movies");
         return result;
     }
 
-    protected void validate(Film film, String message) {
-        if (film.getReleaseDate() == null || film.getReleaseDate().isBefore(LIMIT_DATE)) {
-            log.debug(message);
-            throw new ValidationException(message);
+    private void validate(Film film, String message) {
+        if (film.getName() == null || film.getName().isBlank()) {
+            throw new ValidationException("Name cannot be empty");
+        }
+        if (film.getDescription() != null && film.getDescription().length() > 200) {
+            throw new ValidationException("Description length must be no more than 200 characters");
+        }
+        if (film.getReleaseDate() == null) {
+            throw new ValidationException("Release date cannot be null");
+        }
+        if (film.getReleaseDate().isBefore(LIMIT_DATE)) {
+            throw new ValidationException("Release date cannot be earlier than 1895-12-28");
         }
         if (film.getReleaseDate().isAfter(LocalDate.now())) {
-            log.debug("Release date cannot be in the future");
             throw new ValidationException("Release date cannot be in the future");
         }
         if (film.getDuration() <= 0) {
-            log.debug("Duration must be positive");
             throw new ValidationException("Duration must be positive");
+        }
+        if (film.getMpa() == null) {
+            throw new ValidationException("MPA rating cannot be null");
         }
     }
 }
