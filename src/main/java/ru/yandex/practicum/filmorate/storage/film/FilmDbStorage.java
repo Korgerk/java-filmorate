@@ -93,10 +93,11 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     private Set<Genre> getGenres(int filmId) {
-        Comparator<Genre> compId = Comparator.comparing(Genre::getId);
-        Set<Genre> genres = new TreeSet<>(compId);
-        String sqlQuery = "SELECT film_genres.genre_id, genres.genre_name FROM film_genres " + "JOIN genres ON genres.genre_id = film_genres.genre_id " + "WHERE film_id = ? ORDER BY genre_id ASC";
-        genres.addAll(jdbcTemplate.query(sqlQuery, this::makeGenre, filmId));
+        Set<Genre> genres = new LinkedHashSet<>();
+        String sqlQuery = "SELECT film_genres.genre_id, genres.genre_name FROM film_genres " + "JOIN genres ON genres.genre_id = film_genres.genre_id " + "WHERE film_id = ? ORDER BY genre_id ASC"; // Сортируем по ID
+
+        List<Genre> genreList = jdbcTemplate.query(sqlQuery, this::makeGenre, filmId);
+        genres.addAll(genreList);
         return genres;
     }
 
