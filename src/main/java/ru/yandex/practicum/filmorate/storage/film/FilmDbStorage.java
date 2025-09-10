@@ -38,9 +38,12 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public Film create(Film film) {
         Map<String, Object> keys = new SimpleJdbcInsert(this.jdbcTemplate).withTableName("films").usingColumns("film_name", "description", "duration", "release_date", "rating_id").usingGeneratedKeyColumns("film_id").executeAndReturnKeyHolder(Map.of("film_name", film.getName(), "description", film.getDescription(), "duration", film.getDuration(), "release_date", java.sql.Date.valueOf(film.getReleaseDate()), "rating_id", film.getMpa().getId())).getKeys();
-        film.setId((Integer) keys.get("film_id"));
-        addGenre((Integer) keys.get("film_id"), film.getGenres());
-        return film;
+
+        int filmId = (Integer) keys.get("film_id");
+        film.setId(filmId);
+
+        addGenre(filmId, film.getGenres());
+        return getById(filmId);
     }
 
     @Override
@@ -49,9 +52,7 @@ public class FilmDbStorage implements FilmStorage {
         String sqlQuery = "UPDATE films " + "SET film_name = ?, " + "description = ?, " + "duration = ?, " + "release_date = ?, " + "rating_id = ? " + "WHERE film_id = ?";
         jdbcTemplate.update(sqlQuery, film.getName(), film.getDescription(), film.getDuration(), film.getReleaseDate(), film.getMpa().getId(), film.getId());
         addGenre(film.getId(), film.getGenres());
-        int filmId = film.getId();
-        film.setGenres(getGenres(filmId));
-        return getById(filmId);
+        return getById(film.getId());
     }
 
     @Override
@@ -115,7 +116,7 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     public void removeLike(int filmId, int userId) {
-        String sqlQuery = "DELETE likes " + "WHERE film_id = ? AND user_id = ?";
+        String sqlQuery = "DELETE FROM likes " + "WHERE film_id = ? AND user_id = ?";
         jdbcTemplate.update(sqlQuery, filmId, userId);
     }
 
@@ -135,30 +136,23 @@ public class FilmDbStorage implements FilmStorage {
         Map<Integer, Film> filmsTable = films.stream().collect(Collectors.toMap(Film::getId, film -> film));
         String inSql = String.join(",", Collections.nCopies(filmsTable.size(), "?"));
 
-        final String sqlQuery = "SELECT DISTINCT fg.film_id, fg.genre_id, g.genre_name " + "FROM film_genres fg " + "JOIN genres g ON fg.genre_id = g.genre_id " + "WHERE fg.film_id IN (" + inSql + ") " + "ORDER BY fg.film_id, fg.genre_id ASC"; // Сортировка по film_id и genre_id
+        final String sqlQuery = "SELECT DISTINCT fg.film_id, fg.genre_id, g.genre_name " + "FROM film_genres fg " + "JOIN genres g ON fg.genre_id = g.genre_id " + "WHERE fg.film_id IN (" + inSql + ") " + "ORDER BY fg.film_id, fg.genre_id ASC";
 
+        // Очищаем жанры у всех фильмов
         filmsTable.values().forEach(film -> film.getGenres().clear());
 
-        Map<Integer, List<Genre>> genresByFilmId = new HashMap<>();
-
+        // Заполняем жанры из базы данных (они уже отсортированы по ORDER BY)
         jdbcTemplate.query(sqlQuery, rs -> {
             Integer filmId = rs.getInt("film_id");
             Integer genreId = rs.getInt("genre_id");
             String genreName = rs.getString("genre_name");
 
             Genre genre = new Genre(genreId, genreName);
-            genresByFilmId.computeIfAbsent(filmId, k -> new ArrayList<>()).add(genre);
-        }, filmsTable.keySet().toArray());
-
-        genresByFilmId.forEach((filmId, genreList) -> {
             Film film = filmsTable.get(filmId);
             if (film != null) {
-                // Сортируем жанры по ID перед добавлением
-                genreList.sort(Comparator.comparingInt(Genre::getId));
-                Set<Genre> uniqueGenres = new LinkedHashSet<>(genreList);
-                film.getGenres().addAll(uniqueGenres);
+                film.getGenres().add(genre);
             }
-        });
+        }, filmsTable.keySet().toArray());
 
         return films;
     }
