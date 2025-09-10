@@ -13,10 +13,7 @@ import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -101,11 +98,9 @@ public class FilmService {
     }
 
     private void validate(Film film, String message) {
-
         if (film.getName() == null || film.getName().isBlank()) {
             throw new ValidationException("Name cannot be empty");
         }
-
 
         if (film.getDescription() != null && film.getDescription().length() > 200) {
             throw new ValidationException("Description length must be no more than 200 characters");
@@ -129,22 +124,28 @@ public class FilmService {
             throw new ValidationException("MPA rating cannot be null");
         }
         if (film.getMpa().getId() <= 0 || film.getMpa().getId() > 5) {
-            throw new ValidationException("Invalid MPA rating ID");
+            throw new ValidationException("Invalid MPA rating ID: must be between 1 and 5");
         }
 
         if (film.getGenres() != null) {
             for (Genre genre : film.getGenres()) {
-                if (genre == null || genre.getId() <= 0 || genre.getId() > 6) {
-                    throw new ValidationException("Invalid genre ID: " + (genre != null ? genre.getId() : "null"));
+                if (genre == null) {
+                    throw new ValidationException("Genre cannot be null");
+                }
+                if (genre.getId() <= 0 || genre.getId() > 6) {
+                    throw new ValidationException("Invalid genre ID: " + genre.getId() + ". Must be between 1 and 6");
                 }
             }
-            Set<Integer> seenGenres = new LinkedHashSet<>();
-            Set<Genre> uniqueGenres = new LinkedHashSet<>();
+            List<Genre> uniqueGenres = new ArrayList<>();
+            Set<Integer> seenGenreIds = new HashSet<>();
+
             for (Genre genre : film.getGenres()) {
-                if (genre != null && seenGenres.add(genre.getId())) {
+                if (!seenGenreIds.contains(genre.getId())) {
+                    seenGenreIds.add(genre.getId());
                     uniqueGenres.add(genre);
                 }
             }
+
             film.setGenres(uniqueGenres);
         }
     }
