@@ -13,7 +13,10 @@ import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -136,16 +139,10 @@ public class FilmService {
                     throw new ValidationException("Invalid genre ID: " + genre.getId() + ". Must be between 1 and 6");
                 }
             }
-            List<Genre> uniqueGenres = new ArrayList<>();
-            Set<Integer> seenGenreIds = new HashSet<>();
-
+            Set<Genre> uniqueGenres = new LinkedHashSet<>();
             for (Genre genre : film.getGenres()) {
-                if (!seenGenreIds.contains(genre.getId())) {
-                    seenGenreIds.add(genre.getId());
-                    uniqueGenres.add(genre);
-                }
+                uniqueGenres.add(genre);
             }
-
             film.setGenres(uniqueGenres);
         }
     }

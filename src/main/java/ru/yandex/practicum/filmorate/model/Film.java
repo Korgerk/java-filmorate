@@ -10,9 +10,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 @Builder(toBuilder = true)
@@ -31,7 +30,7 @@ public class Film {
     private LocalDate releaseDate;
     @Positive
     private int duration;
-    private List<Genre> genres = new ArrayList<>();
+    private Set<Genre> genres = new LinkedHashSet<>();
     @NotNull
     private Mpa mpa;
 
@@ -44,7 +43,7 @@ public class Film {
     }
 
     public void addGenre(Genre genre) {
-        if (genre != null && !genres.contains(genre)) {
+        if (genre != null) {
             genres.add(genre);
         }
     }
