@@ -138,10 +138,8 @@ public class FilmDbStorage implements FilmStorage {
 
         final String sqlQuery = "SELECT DISTINCT fg.film_id, fg.genre_id, g.genre_name " + "FROM film_genres fg " + "JOIN genres g ON fg.genre_id = g.genre_id " + "WHERE fg.film_id IN (" + inSql + ") " + "ORDER BY fg.film_id, fg.genre_id ASC";
 
-        // Очищаем жанры у всех фильмов
         filmsTable.values().forEach(film -> film.getGenres().clear());
 
-        // Заполняем жанры из базы данных (они уже отсортированы по ORDER BY)
         jdbcTemplate.query(sqlQuery, rs -> {
             Integer filmId = rs.getInt("film_id");
             Integer genreId = rs.getInt("genre_id");
