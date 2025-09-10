@@ -9,6 +9,7 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Genre {
     @EqualsAndHashCode.Include
     @Positive(message = "Genre ID must be positive")
@@ -16,4 +17,9 @@ public class Genre {
 
     @NotBlank(message = "Genre name cannot be blank")
     private String name;
+
+    @Override
+    public String toString() {
+        return "Genre{id=" + id + ", name='" + name + "'}";
+    }
 }

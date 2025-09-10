@@ -171,7 +171,7 @@ public class FilmDbStorage implements FilmStorage {
     private Film makeFilm(ResultSet rs, int rowNum) throws SQLException {
         Mpa mpa = new Mpa(rs.getInt("rating_id"), rs.getString("rating_name"));
 
-        return Film.builder().id(rs.getInt("film_id")).name(rs.getString("film_name")).description(rs.getString("description")).duration(rs.getInt("duration")).releaseDate(rs.getDate("release_date").toLocalDate()).mpa(mpa).genres(new HashSet<>()).build();
+        return Film.builder().id(rs.getInt("film_id")).name(rs.getString("film_name")).description(rs.getString("description")).duration(rs.getInt("duration")).releaseDate(rs.getDate("release_date").toLocalDate()).mpa(mpa).genres(new LinkedHashSet<>()).build();
     }
 
     private Film filmMap(SqlRowSet srs) {
