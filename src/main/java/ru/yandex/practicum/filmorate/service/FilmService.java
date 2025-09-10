@@ -14,9 +14,7 @@ import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
 import java.util.Collection;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 
 @Slf4j
 @Service
@@ -38,17 +36,18 @@ public class FilmService {
     }
 
     public Film create(Film film) {
-        validate(film, "Movie form is filled in incorrectly");
+        validate(film);
         Film result = filmStorage.create(film);
         log.info("Movie successfully added: " + film);
         return result;
     }
 
     public Film update(Film film) {
-        validate(film, "Movie update form is filled in incorrectly");
+        validate(film);
 
         Film existingFilm = filmStorage.getById(film.getId());
         if (existingFilm == null) {
+            log.debug("Movie with ID = " + film.getId() + " not found");
             throw new NotFoundException("Movie with ID = " + film.getId() + " not found");
         }
 
@@ -60,6 +59,7 @@ public class FilmService {
     public Film getById(Integer id) {
         Film film = filmStorage.getById(id);
         if (film == null) {
+            log.debug("Movie with ID = " + id + " not found");
             throw new NotFoundException("Movie with ID = " + id + " not found");
         }
         log.info("Requested movie with ID = " + id);
@@ -71,9 +71,11 @@ public class FilmService {
         User user = userStorage.getById(userId);
 
         if (film == null) {
+            log.debug("Movie with ID = " + filmId + " not found");
             throw new NotFoundException("Movie with ID = " + filmId + " not found");
         }
         if (user == null) {
+            log.debug("User with ID = " + userId + " not found");
             throw new NotFoundException("User with ID = " + userId + " not found");
         }
 
@@ -84,9 +86,11 @@ public class FilmService {
     public void removeLike(Integer filmId, Integer userId) {
         Film film = filmStorage.getById(filmId);
         if (film == null) {
+            log.debug("Movie with ID = " + filmId + " not found");
             throw new NotFoundException("Movie with ID = " + filmId + " not found");
         }
         if (userStorage.getById(userId) == null) {
+            log.debug("User with ID = " + userId + " not found");
             throw new NotFoundException("User with ID = " + userId + " not found");
         }
 
@@ -100,50 +104,55 @@ public class FilmService {
         return result;
     }
 
-    private void validate(Film film, String message) {
+    private void validate(Film film) {
         if (film.getName() == null || film.getName().isBlank()) {
+            log.debug("Name cannot be empty");
             throw new ValidationException("Name cannot be empty");
         }
 
         if (film.getDescription() != null && film.getDescription().length() > 200) {
+            log.debug("Description length must be no more than 200 characters");
             throw new ValidationException("Description length must be no more than 200 characters");
         }
 
         if (film.getReleaseDate() == null) {
+            log.debug("Release date cannot be null");
             throw new ValidationException("Release date cannot be null");
         }
         if (film.getReleaseDate().isBefore(LIMIT_DATE)) {
+            log.debug("Release date cannot be earlier than 1895-12-28");
             throw new ValidationException("Release date cannot be earlier than 1895-12-28");
         }
         if (film.getReleaseDate().isAfter(LocalDate.now())) {
+            log.debug("Release date cannot be in the future");
             throw new ValidationException("Release date cannot be in the future");
         }
 
         if (film.getDuration() <= 0) {
+            log.debug("Duration must be positive");
             throw new ValidationException("Duration must be positive");
         }
 
         if (film.getMpa() == null) {
+            log.debug("MPA rating cannot be null");
             throw new ValidationException("MPA rating cannot be null");
         }
-        if (film.getMpa().getId() <= 0 || film.getMpa().getId() > 5) {
-            throw new ValidationException("Invalid MPA rating ID: must be between 1 and 5");
+        if (film.getMpa().getId() <= 0) {
+            log.debug("Invalid MPA rating ID: " + film.getMpa().getId());
+            throw new ValidationException("Invalid MPA rating ID");
         }
 
         if (film.getGenres() != null) {
             for (Genre genre : film.getGenres()) {
                 if (genre == null) {
+                    log.debug("Genre cannot be null");
                     throw new ValidationException("Genre cannot be null");
                 }
-                if (genre.getId() <= 0 || genre.getId() > 6) {
-                    throw new ValidationException("Invalid genre ID: " + genre.getId() + ". Must be between 1 and 6");
+                if (genre.getId() <= 0) {
+                    log.debug("Invalid genre ID: " + genre.getId());
+                    throw new ValidationException("Invalid genre ID");
                 }
             }
-            Set<Genre> uniqueGenres = new LinkedHashSet<>();
-            for (Genre genre : film.getGenres()) {
-                uniqueGenres.add(genre);
-            }
-            film.setGenres(uniqueGenres);
         }
     }
 }
