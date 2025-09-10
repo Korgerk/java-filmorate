@@ -75,28 +75,29 @@ public class FilmDbStorage implements FilmStorage {
 
     public void addGenre(int filmId, Set<Genre> genres) {
         deleteAllGenresById(filmId);
+
         if (genres == null || genres.isEmpty()) {
             return;
         }
+
         String sqlQuery = "INSERT INTO film_genres (film_id, genre_id) " + "VALUES (?, ?)";
-        List<Genre> genresTable = new ArrayList<>(genres);
+
+        List<Genre> genreList = new ArrayList<>(genres);
         this.jdbcTemplate.batchUpdate(sqlQuery, new BatchPreparedStatementSetter() {
             public void setValues(PreparedStatement ps, int i) throws SQLException {
                 ps.setInt(1, filmId);
-                ps.setInt(2, genresTable.get(i).getId());
+                ps.setInt(2, genreList.get(i).getId());
             }
 
             public int getBatchSize() {
-                return genresTable.size();
+                return genreList.size();
             }
         });
     }
 
     private Set<Genre> getGenres(int filmId) {
         Set<Genre> genres = new LinkedHashSet<>();
-        String sqlQuery = "SELECT film_genres.genre_id, genres.genre_name FROM film_genres " +
-                          "JOIN genres ON genres.genre_id = film_genres.genre_id " +
-                          "WHERE film_id = ? ORDER BY genre_id ASC"; // Сортируем по ID
+        String sqlQuery = "SELECT film_genres.genre_id, genres.genre_name FROM film_genres " + "JOIN genres ON genres.genre_id = film_genres.genre_id " + "WHERE film_id = ? ORDER BY genre_id ASC";
 
         List<Genre> genreList = jdbcTemplate.query(sqlQuery, this::makeGenre, filmId);
         genres.addAll(genreList);
@@ -127,27 +128,36 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     private List<Film> addGenreForList(List<Film> films) {
+        if (films.isEmpty()) {
+            return films;
+        }
+
         Map<Integer, Film> filmsTable = films.stream().collect(Collectors.toMap(Film::getId, film -> film));
-        String inSql = String.join(", ", Collections.nCopies(filmsTable.size(), "?"));
+        String inSql = String.join(",", Collections.nCopies(filmsTable.size(), "?"));
 
-        final String sqlQuery = "SELECT DISTINCT fg.film_id, fg.genre_id, g.genre_name " + "FROM film_genres fg " + "LEFT OUTER JOIN genres g ON fg.genre_id = g.genre_id " + "WHERE fg.film_id IN (" + inSql + ") " + "ORDER BY fg.film_id, fg.genre_id";
+        final String sqlQuery = "SELECT DISTINCT fg.film_id, fg.genre_id, g.genre_name " + "FROM film_genres fg " + "JOIN genres g ON fg.genre_id = g.genre_id " + "WHERE fg.film_id IN (" + inSql + ") " + "ORDER BY fg.film_id, fg.genre_id ASC";
 
-        jdbcTemplate.query(sqlQuery, (rs) -> {
+        filmsTable.values().forEach(film -> film.getGenres().clear());
+
+        Map<Integer, List<Genre>> genresByFilmId = new HashMap<>();
+
+        jdbcTemplate.query(sqlQuery, rs -> {
             Integer filmId = rs.getInt("film_id");
+            Integer genreId = rs.getInt("genre_id");
+            String genreName = rs.getString("genre_name");
+
+            Genre genre = new Genre(genreId, genreName);
+            genresByFilmId.computeIfAbsent(filmId, k -> new ArrayList<>()).add(genre);
+        }, filmsTable.keySet().toArray());
+
+        genresByFilmId.forEach((filmId, genreList) -> {
             Film film = filmsTable.get(filmId);
             if (film != null) {
-                boolean genreExists = film.getGenres().stream().anyMatch(g -> {
-                    try {
-                        return g.getId() == rs.getInt("genre_id");
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
-                if (!genreExists) {
-                    film.addGenre(new Genre(rs.getInt("genre_id"), rs.getString("genre_name")));
-                }
+                Set<Genre> uniqueGenres = new LinkedHashSet<>();
+                genreList.forEach(uniqueGenres::add);
+                film.getGenres().addAll(uniqueGenres);
             }
-        }, filmsTable.keySet().toArray());
+        });
 
         return films;
     }

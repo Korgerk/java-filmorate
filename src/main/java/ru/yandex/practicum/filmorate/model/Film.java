@@ -44,12 +44,8 @@ public class Film {
 
     public void addGenre(Genre genre) {
         if (genre != null) {
-            boolean alreadyExists = genres.stream()
-                    .anyMatch(g -> g.getId() == genre.getId());
-
-            if (!alreadyExists) {
-                genres.add(genre);
-            }
+            genres.removeIf(g -> g.getId() == genre.getId());
+            genres.add(genre);
         }
     }
 

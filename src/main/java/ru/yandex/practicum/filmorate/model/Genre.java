@@ -10,6 +10,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Genre {
+    @EqualsAndHashCode.Include
     @Positive(message = "Genre ID must be positive")
     private int id;
 
