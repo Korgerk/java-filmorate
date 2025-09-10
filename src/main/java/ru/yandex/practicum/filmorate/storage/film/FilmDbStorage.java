@@ -126,10 +126,26 @@ public class FilmDbStorage implements FilmStorage {
     private List<Film> addGenreForList(List<Film> films) {
         Map<Integer, Film> filmsTable = films.stream().collect(Collectors.toMap(Film::getId, film -> film));
         String inSql = String.join(", ", Collections.nCopies(filmsTable.size(), "?"));
-        final String sqlQuery = "SELECT * " + "FROM film_genres " + "LEFT OUTER JOIN genres ON film_genres.genre_id = genres.genre_id " + "WHERE film_genres.film_id IN (" + inSql + ") " + "ORDER BY film_genres.genre_id";
+
+        final String sqlQuery = "SELECT DISTINCT fg.film_id, fg.genre_id, g.genre_name " + "FROM film_genres fg " + "LEFT OUTER JOIN genres g ON fg.genre_id = g.genre_id " + "WHERE fg.film_id IN (" + inSql + ") " + "ORDER BY fg.film_id, fg.genre_id";
+
         jdbcTemplate.query(sqlQuery, (rs) -> {
-            filmsTable.get(rs.getInt("film_id")).addGenre(new Genre(rs.getInt("genre_id"), rs.getString("genre_name")));
+            Integer filmId = rs.getInt("film_id");
+            Film film = filmsTable.get(filmId);
+            if (film != null) {
+                boolean genreExists = film.getGenres().stream().anyMatch(g -> {
+                    try {
+                        return g.getId() == rs.getInt("genre_id");
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+                if (!genreExists) {
+                    film.addGenre(new Genre(rs.getInt("genre_id"), rs.getString("genre_name")));
+                }
+            }
         }, filmsTable.keySet().toArray());
+
         return films;
     }
 

@@ -8,6 +8,7 @@ import ru.yandex.practicum.filmorate.expectation.NotFoundException;
 import ru.yandex.practicum.filmorate.expectation.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
@@ -16,6 +17,7 @@ import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 
+
 @Slf4j
 @Service
 @Transactional
@@ -23,11 +25,16 @@ public class FilmService {
     private static final LocalDate LIMIT_DATE = LocalDate.of(1895, 12, 28);
     private final UserStorage userStorage;
     private final FilmStorage filmStorage;
+    private final MpaService mpaService;
+    private final GenreService genreService;
+
 
     @Autowired
-    public FilmService(FilmStorage filmStorage, UserStorage userStorage) {
+    public FilmService(FilmStorage filmStorage, UserStorage userStorage, MpaService mpaService, GenreService genreService) {
         this.userStorage = userStorage;
         this.filmStorage = filmStorage;
+        this.mpaService = mpaService;
+        this.genreService = genreService;
     }
 
     public Collection<Film> getAll() {
@@ -105,6 +112,34 @@ public class FilmService {
     }
 
     private void validate(Film film) {
+
+        if (film.getMpa() != null && film.getMpa().getId() > 0) {
+            Mpa existingMpa = mpaService.getRatingMpaById(film.getMpa().getId());
+            if (existingMpa == null) {
+                log.debug("MPA rating with ID = {} not found", film.getMpa().getId());
+                throw new ValidationException("MPA rating with ID = " + film.getMpa().getId() + " not found");
+            }
+        }
+
+        if (film.getGenres() != null) {
+            for (Genre genre : film.getGenres()) {
+                if (genre == null) {
+                    log.debug("Genre cannot be null");
+                    throw new ValidationException("Genre cannot be null");
+                }
+                if (genre.getId() <= 0) {
+                    log.debug("Invalid genre ID: " + genre.getId());
+                    throw new ValidationException("Invalid genre ID");
+                }
+
+                Genre existingGenre = genreService.getGenreById(genre.getId());
+                if (existingGenre == null) {
+                    log.debug("Genre with ID = {} not found", genre.getId());
+                    throw new ValidationException("Genre with ID = " + genre.getId() + " not found");
+                }
+            }
+        }
+
         if (film.getName() == null || film.getName().isBlank()) {
             log.debug("Name cannot be empty");
             throw new ValidationException("Name cannot be empty");
