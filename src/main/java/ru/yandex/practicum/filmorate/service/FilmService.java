@@ -7,13 +7,16 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.expectation.NotFoundException;
 import ru.yandex.practicum.filmorate.expectation.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -98,12 +101,16 @@ public class FilmService {
     }
 
     private void validate(Film film, String message) {
+
         if (film.getName() == null || film.getName().isBlank()) {
             throw new ValidationException("Name cannot be empty");
         }
+
+
         if (film.getDescription() != null && film.getDescription().length() > 200) {
             throw new ValidationException("Description length must be no more than 200 characters");
         }
+
         if (film.getReleaseDate() == null) {
             throw new ValidationException("Release date cannot be null");
         }
@@ -113,11 +120,32 @@ public class FilmService {
         if (film.getReleaseDate().isAfter(LocalDate.now())) {
             throw new ValidationException("Release date cannot be in the future");
         }
+
         if (film.getDuration() <= 0) {
             throw new ValidationException("Duration must be positive");
         }
+
         if (film.getMpa() == null) {
             throw new ValidationException("MPA rating cannot be null");
+        }
+        if (film.getMpa().getId() <= 0 || film.getMpa().getId() > 5) {
+            throw new ValidationException("Invalid MPA rating ID");
+        }
+
+        if (film.getGenres() != null) {
+            for (Genre genre : film.getGenres()) {
+                if (genre == null || genre.getId() <= 0 || genre.getId() > 6) {
+                    throw new ValidationException("Invalid genre ID: " + (genre != null ? genre.getId() : "null"));
+                }
+            }
+            Set<Integer> seenGenres = new LinkedHashSet<>();
+            Set<Genre> uniqueGenres = new LinkedHashSet<>();
+            for (Genre genre : film.getGenres()) {
+                if (genre != null && seenGenres.add(genre.getId())) {
+                    uniqueGenres.add(genre);
+                }
+            }
+            film.setGenres(uniqueGenres);
         }
     }
 }

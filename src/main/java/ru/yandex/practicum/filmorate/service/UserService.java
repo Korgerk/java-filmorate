@@ -60,7 +60,7 @@ public class UserService {
     }
 
     public void addFriend(Integer userId, Integer friendId) {
-        // Проверяем существование пользователей
+
         if (userStorage.getById(userId) == null) {
             throw new NotFoundException("User with ID = " + userId + " not found");
         }
@@ -68,7 +68,6 @@ public class UserService {
             throw new NotFoundException("User with ID = " + friendId + " not found");
         }
 
-        // Запрещаем добавлять себя в друзья
         if (userId.equals(friendId)) {
             throw new ValidationException("User cannot add himself as a friend");
         }
@@ -78,7 +77,6 @@ public class UserService {
     }
 
     public void removeFriend(Integer userId, Integer friendId) {
-        // Проверяем существование пользователей
         if (userStorage.getById(userId) == null) {
             throw new NotFoundException("User with ID = " + userId + " not found");
         }
@@ -98,7 +96,6 @@ public class UserService {
     }
 
     public List<User> getCommonFriends(Integer user1Id, Integer user2Id) {
-        // Проверяем существование пользователей
         if (userStorage.getById(user1Id) == null) {
             throw new NotFoundException("User with ID = " + user1Id + " not found");
         }
