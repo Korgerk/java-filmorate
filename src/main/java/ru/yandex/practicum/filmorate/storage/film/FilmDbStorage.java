@@ -80,28 +80,28 @@ public class FilmDbStorage implements FilmStorage {
             return;
         }
 
-        String sqlQuery = "INSERT INTO film_genres (film_id, genre_id) " + "VALUES (?, ?)";
+        List<Genre> sortedGenres = genres.stream().sorted(Comparator.comparingInt(Genre::getId)).collect(Collectors.toList());
 
-        List<Genre> genreList = new ArrayList<>(genres);
+        String sqlQuery = "INSERT INTO film_genres (film_id, genre_id) VALUES (?, ?)";
+
         this.jdbcTemplate.batchUpdate(sqlQuery, new BatchPreparedStatementSetter() {
             public void setValues(PreparedStatement ps, int i) throws SQLException {
                 ps.setInt(1, filmId);
-                ps.setInt(2, genreList.get(i).getId());
+                ps.setInt(2, sortedGenres.get(i).getId());
             }
 
             public int getBatchSize() {
-                return genreList.size();
+                return sortedGenres.size();
             }
         });
     }
 
     private Set<Genre> getGenres(int filmId) {
-        Set<Genre> genres = new LinkedHashSet<>();
-        String sqlQuery = "SELECT film_genres.genre_id, genres.genre_name FROM film_genres " + "JOIN genres ON genres.genre_id = film_genres.genre_id " + "WHERE film_id = ? ORDER BY genre_id ASC";
+        String sqlQuery = "SELECT film_genres.genre_id, genres.genre_name FROM film_genres " + "JOIN genres ON genres.genre_id = film_genres.genre_id " + "WHERE film_id = ? ORDER BY film_genres.genre_id ASC";
 
         List<Genre> genreList = jdbcTemplate.query(sqlQuery, this::makeGenre, filmId);
-        genres.addAll(genreList);
-        return genres;
+
+        return genreList.stream().sorted(Comparator.comparingInt(Genre::getId)).collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     private void deleteAllGenresById(int filmId) {
@@ -135,7 +135,7 @@ public class FilmDbStorage implements FilmStorage {
         Map<Integer, Film> filmsTable = films.stream().collect(Collectors.toMap(Film::getId, film -> film));
         String inSql = String.join(",", Collections.nCopies(filmsTable.size(), "?"));
 
-        final String sqlQuery = "SELECT DISTINCT fg.film_id, fg.genre_id, g.genre_name " + "FROM film_genres fg " + "JOIN genres g ON fg.genre_id = g.genre_id " + "WHERE fg.film_id IN (" + inSql + ") " + "ORDER BY fg.film_id, fg.genre_id ASC";
+        final String sqlQuery = "SELECT DISTINCT fg.film_id, fg.genre_id, g.genre_name " + "FROM film_genres fg " + "JOIN genres g ON fg.genre_id = g.genre_id " + "WHERE fg.film_id IN (" + inSql + ") " + "ORDER BY fg.film_id, fg.genre_id ASC"; // Сортировка по film_id и genre_id
 
         filmsTable.values().forEach(film -> film.getGenres().clear());
 
@@ -153,8 +153,9 @@ public class FilmDbStorage implements FilmStorage {
         genresByFilmId.forEach((filmId, genreList) -> {
             Film film = filmsTable.get(filmId);
             if (film != null) {
-                Set<Genre> uniqueGenres = new LinkedHashSet<>();
-                genreList.forEach(uniqueGenres::add);
+                // Сортируем жанры по ID перед добавлением
+                genreList.sort(Comparator.comparingInt(Genre::getId));
+                Set<Genre> uniqueGenres = new LinkedHashSet<>(genreList);
                 film.getGenres().addAll(uniqueGenres);
             }
         });
