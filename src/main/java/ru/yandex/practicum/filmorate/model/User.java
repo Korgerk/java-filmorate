@@ -5,9 +5,11 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
 import java.util.HashSet;
@@ -16,17 +18,18 @@ import java.util.Set;
 @Builder(toBuilder = true)
 @Data
 @AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class User {
     @JsonIgnore
-    private final Set<Integer> friendIds = new HashSet<>();
-    private int id;
+    final Set<Integer> friendIds = new HashSet<>();
+    int id;
     @Email
     @NotBlank
-    private String email;
+    String email;
     @NotBlank
-    private String login;
-    private String name;
+    String login;
+    String name;
     @PastOrPresent
     @NotNull
-    private LocalDate birthday;
+    LocalDate birthday;
 }
