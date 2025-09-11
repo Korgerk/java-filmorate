@@ -1,16 +1,19 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.expectation.NotFoundException;
+import ru.yandex.practicum.filmorate.expectation.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
-import java.util.Set;
+import java.time.LocalDate;
+import java.util.List;
 
 @Service
+@Slf4j
 public class UserService {
-
     private final UserStorage userStorage;
 
     @Autowired
@@ -18,47 +21,116 @@ public class UserService {
         this.userStorage = userStorage;
     }
 
-    public User create(User user) {
-        return userStorage.create(user);
-    }
-
-    public User update(User user) {
-        return userStorage.update(user);
-    }
-
-    public User getById(int id) {
-        return userStorage.getById(id);
-    }
-
-    public Set<User> getAll() {
+    public List<User> getAll() {
         return userStorage.getAll();
     }
 
-    public void addFriend(int userId, int friendId) {
-        if (!userStorage.exists(userId)) {
-            throw new ValidationException("Пользователь с id=" + userId + " не найден.");
+    public User create(User user) {
+        validate(user, "User form is filled in incorrectly");
+        preSave(user);
+        User result = userStorage.create(user);
+        return result;
+    }
+
+    public User update(User user) {
+        validate(user, "User update form is filled in incorrectly");
+        preSave(user);
+        if (userStorage.getById(user.getId()) == null) {
+            throw new NotFoundException("User with ID = " + user.getId() + " not found");
         }
-        if (!userStorage.exists(friendId)) {
-            throw new ValidationException("Пользователь с id=" + friendId + " не найден.");
+        User result = userStorage.update(user);
+        return result;
+    }
+
+    public void delete(int userId) {
+        if (userStorage.getById(userId) == null) {
+            throw new NotFoundException("User with ID = " + userId + " not found");
         }
+        log.info("Deleted user with id: {}", userId);
+        userStorage.delete(userId);
+    }
+
+    public User getById(Integer id) {
+        User user = userStorage.getById(id);
+        if (user == null) {
+            throw new NotFoundException("User with ID = " + id + " not found");
+        }
+        log.info("Requested user with ID = " + id);
+        return user;
+    }
+
+    public void addFriend(Integer userId, Integer friendId) {
+
+        if (userStorage.getById(userId) == null) {
+            throw new NotFoundException("User with ID = " + userId + " not found");
+        }
+        if (userStorage.getById(friendId) == null) {
+            throw new NotFoundException("User with ID = " + friendId + " not found");
+        }
+
+        if (userId.equals(friendId)) {
+            throw new ValidationException("User cannot add himself as a friend");
+        }
+
         userStorage.addFriend(userId, friendId);
+        log.info("User {} added friend {}", userId, friendId);
     }
 
-    public void removeFriend(int userId, int friendId) {
-        if (!userStorage.exists(userId)) {
-            throw new ValidationException("Пользователь с id=" + userId + " не найден.");
+    public void removeFriend(Integer userId, Integer friendId) {
+        if (userStorage.getById(userId) == null) {
+            throw new NotFoundException("User with ID = " + userId + " not found");
         }
-        if (!userStorage.exists(friendId)) {
-            throw new ValidationException("Пользователь с id=" + friendId + " не найден.");
+        if (userStorage.getById(friendId) == null) {
+            throw new NotFoundException("User with ID = " + friendId + " not found");
         }
+
         userStorage.removeFriend(userId, friendId);
+        log.info("User {} removed friend {}", userId, friendId);
     }
 
-    public Set<User> getFriends(int userId) {
+    public List<User> getFriends(Integer userId) {
+        if (userStorage.getById(userId) == null) {
+            throw new NotFoundException("User with ID = " + userId + " not found");
+        }
         return userStorage.getFriends(userId);
     }
 
-    public Set<User> getCommonFriends(int userId, int otherId) {
-        return userStorage.getCommonFriends(userId, otherId);
+    public List<User> getCommonFriends(Integer user1Id, Integer user2Id) {
+        if (userStorage.getById(user1Id) == null) {
+            throw new NotFoundException("User with ID = " + user1Id + " not found");
+        }
+        if (userStorage.getById(user2Id) == null) {
+            throw new NotFoundException("User with ID = " + user2Id + " not found");
+        }
+
+        return userStorage.getCommonFriends(user1Id, user2Id);
+    }
+
+    private void validate(User user, String message) {
+        if (user.getEmail() == null || user.getEmail().isBlank()) {
+            throw new ValidationException("Email cannot be empty");
+        }
+        if (!user.getEmail().contains("@")) {
+            throw new ValidationException("Email must contain @ symbol");
+        }
+        if (user.getLogin() == null || user.getLogin().isBlank()) {
+            throw new ValidationException("Login cannot be empty");
+        }
+        if (user.getLogin().contains(" ")) {
+            throw new ValidationException("Login cannot contain spaces");
+        }
+        if (user.getBirthday() == null) {
+            throw new ValidationException("Birthday cannot be null");
+        }
+        if (user.getBirthday().isAfter(LocalDate.now())) {
+            log.debug(message);
+            throw new ValidationException("Birthday cannot be in the future");
+        }
+    }
+
+    private void preSave(User user) {
+        if (user.getName() == null || user.getName().isBlank()) {
+            user.setName(user.getLogin());
+        }
     }
 }

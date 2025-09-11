@@ -1,29 +1,40 @@
 package ru.yandex.practicum.filmorate.model;
 
-import jakarta.validation.constraints.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
-import static lombok.AccessLevel.PRIVATE;
-
+@Builder(toBuilder = true)
 @Data
-@FieldDefaults(level = PRIVATE)
+@AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class User {
-    Integer id;
+    @JsonIgnore
+    final Set<Integer> friendIds = new HashSet<>();
 
-    @Email(message = "Электронная почта должна быть в формате user@example.com.")
-    @NotBlank(message = "Email не может быть пустым.")
+    int id;
+
+    @Email
+    @NotBlank
     String email;
 
-    @NotBlank(message = "Логин не может быть пустым.")
-    @Pattern(regexp = "\\S+", message = "Логин не должен содержать пробелов.")
+    @NotBlank
     String login;
 
     String name;
 
-    @PastOrPresent(message = "Дата рождения не может быть в будущем.")
-    @NotNull(message = "Дата рождения обязательна.")
+    @PastOrPresent
+    @NotNull
     LocalDate birthday;
 }
