@@ -20,16 +20,23 @@ import java.util.Set;
 public class Film {
     @JsonIgnore
     final Set<Integer> likes = new HashSet<>();
+
     int id;
+
     @NotBlank
     String name;
+
     @NotBlank
     String description;
+
     @NotNull
     LocalDate releaseDate;
+
     @Positive
     int duration;
+
     Set<Genre> genres = new LinkedHashSet<>();
+
     @NotNull
     Mpa mpa;
 
